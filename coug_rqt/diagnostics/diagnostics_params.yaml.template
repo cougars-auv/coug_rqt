@@ -1,0 +1,64 @@
+diagnostic_aggregator:
+  ros__parameters:
+    analyzers: ["AUV_NS"]
+
+    AUV_NS:
+      type: diagnostic_aggregator/AnalyzerGroup
+      path: AUV_NS
+      analyzers:
+        [
+          "factor_graph_node",
+          "waypoint_follower_node",
+          "dvl_a50_twist_node",
+          "dvl_a50_odom_node",
+          "fluid_pressure_odom_node",
+          "navsat_odom_node",
+        ]
+
+      factor_graph_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "factor_graph_node"
+        regex: [".*factor_graph_node.*AUV_NS.*"]
+        find_and_remove_prefix:
+          [
+            "factor_graph_node: [/AUV_NS] ",
+            "factor_graph_node_isam2: [/AUV_NS] ",
+            "factor_graph_node_lpi: [/AUV_NS] ",
+            "factor_graph_node_tpi: [/AUV_NS] ",
+          ]
+        timeout: 5.0
+
+      waypoint_follower_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "waypoint_follower_node"
+        regex: [".*waypoint_follower_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["waypoint_follower_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      dvl_a50_twist_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "dvl_a50_twist_node"
+        regex: [".*dvl_a50_twist_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["dvl_a50_twist_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      dvl_a50_odom_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "dvl_a50_odom_node"
+        regex: [".*dvl_a50_odom_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["dvl_a50_odom_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      fluid_pressure_odom_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "fluid_pressure_odom_node"
+        regex: [".*fluid_pressure_odom_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["fluid_pressure_odom_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      navsat_odom_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "navsat_odom_node"
+        regex: [".*navsat_odom_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["navsat_odom_node: [/AUV_NS] "]
+        timeout: 5.0
