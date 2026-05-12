@@ -8,7 +8,7 @@ diagnostic_aggregator:
       analyzers:
         [
           "factor_graph_node",
-          "waypoint_follower_node",
+          "bt_helm_node",
           "dvl_a50_twist_node",
           "dvl_a50_odom_node",
           "fluid_pressure_odom_node",
@@ -28,11 +28,11 @@ diagnostic_aggregator:
           ]
         timeout: 5.0
 
-      waypoint_follower_node:
+      bt_helm_node:
         type: diagnostic_aggregator/GenericAnalyzer
-        path: "waypoint_follower_node"
-        regex: [".*waypoint_follower_node.*AUV_NS.*"]
-        find_and_remove_prefix: ["waypoint_follower_node: [/AUV_NS] "]
+        path: "bt_helm_node"
+        regex: [".*bt_helm_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["bt_helm_node: [/AUV_NS] "]
         timeout: 5.0
 
       dvl_a50_twist_node:
