@@ -13,6 +13,7 @@ diagnostic_aggregator:
           "dvl_a50_odom_node",
           "fluid_pressure_odom_node",
           "navsat_odom_node",
+          "seatrac_x150_imu_node",
         ]
 
       factor_graph_node:
@@ -61,4 +62,11 @@ diagnostic_aggregator:
         path: "navsat_odom_node"
         regex: [".*navsat_odom_node.*AUV_NS.*"]
         find_and_remove_prefix: ["navsat_odom_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      seatrac_x150_imu_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "seatrac_x150_imu_node"
+        regex: [".*seatrac_x150_imu_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["seatrac_x150_imu_node: [/AUV_NS] "]
         timeout: 5.0
