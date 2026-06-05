@@ -67,7 +67,9 @@ def launch_setup(context, *args, **kwargs) -> list:
             executable="rqt_gui",
             name="rqt_gui",
             arguments=["--perspective-file", rqt_perspective_file],
-            parameters=[{"use_sim_time": use_sim_time}],
+            parameters=[
+                {"use_sim_time": use_sim_time, "agent_namespaces": agent_namespaces}
+            ],
         ),
     ]
 

@@ -8,6 +8,9 @@
   <license>Apache-2.0</license>
 
   <exec_depend>rqt_gui</exec_depend>
+  <exec_depend>rqt_gui_py</exec_depend>
+  <exec_depend>python_qt_binding</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
   <exec_depend>diagnostic_aggregator</exec_depend>
   <exec_depend>rqt_console</exec_depend>
   <exec_depend>rqt_robot_monitor</exec_depend>
@@ -17,5 +20,6 @@
 
   <export>
     <build_type>ament_python</build_type>
+    <rqt_gui plugin="${prefix}/plugin.xml"/>
   </export>
 </package>
