@@ -14,6 +14,7 @@ diagnostic_aggregator:
           "fluid_pressure_odom_node",
           "navsat_odom_node",
           "seatrac_x150_imu_node",
+          "bag_recorder_node",
         ]
 
       factor_graph_node:
@@ -69,4 +70,11 @@ diagnostic_aggregator:
         path: "seatrac_x150_imu_node"
         regex: [".*seatrac_x150_imu_node.*AUV_NS.*"]
         find_and_remove_prefix: ["seatrac_x150_imu_node: [/AUV_NS] "]
+        timeout: 5.0
+
+      bag_recorder_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "bag_recorder_node"
+        regex: [".*bag_recorder_node.*AUV_NS.*"]
+        find_and_remove_prefix: ["bag_recorder_node: [/AUV_NS] "]
         timeout: 5.0
