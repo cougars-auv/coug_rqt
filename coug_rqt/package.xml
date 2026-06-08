@@ -7,6 +7,7 @@
   <maintainer email="snelsondurrant@gmail.com">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
 
+  <exec_depend>coug_interfaces</exec_depend>
   <exec_depend>rqt_gui</exec_depend>
   <exec_depend>rqt_gui_py</exec_depend>
   <exec_depend>python_qt_binding</exec_depend>

@@ -16,7 +16,9 @@ import os
 
 import rclpy.exceptions
 from ament_index_python.packages import get_package_share_directory
+from coug_interfaces.srv import BagRecord
 from python_qt_binding import loadUi
+from python_qt_binding.QtCore import QTimer
 from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
 
@@ -47,15 +49,16 @@ class CougUtilsPlugin(Plugin):
             )
         context.add_widget(self._widget)
 
-        node = context.node
+        self._node = context.node
         try:
-            node.declare_parameter("agent_namespaces", [""])
+            self._node.declare_parameter("agent_namespaces", [""])
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
-        for ns in node.get_parameter("agent_namespaces").value:
+        for ns in self._node.get_parameter("agent_namespaces").value:
             if ns:
                 self._widget.agent_selector.addItem(ns)
 
+        self._bag_record_client = None
         self._current_agent = ""
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         self._widget.rosbag_start.clicked.connect(self._rosbag_start)
@@ -69,15 +72,38 @@ class CougUtilsPlugin(Plugin):
 
     def _on_agent_changed(self, text):
         self._current_agent = text
+        self._bag_record_client = self._node.create_client(
+            BagRecord, f"{text}/bag_record"
+        )
+
+    def _call_service(self, client, request, indicator, color):
+        if client is None:
+            return
+        future = client.call_async(request)
+        future.add_done_callback(
+            lambda f: QTimer.singleShot(
+                0, lambda: self._on_service_done(f, indicator, color)
+            )
+        )
+
+    def _on_service_done(self, future, indicator, color):
+        if future.result() is not None and future.result().success:
+            indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
     def _rosbag_start(self):
-        self._widget.rosbag_indicator.setStyleSheet(
-            "background-color: #00cc00; border-radius: 6px;"
+        req = BagRecord.Request()
+        req.start = True
+        req.prefix = self._widget.bag_prefix.text()
+        self._call_service(
+            self._bag_record_client, req, self._widget.rosbag_indicator, "#00cc00"
         )
 
     def _rosbag_stop(self):
-        self._widget.rosbag_indicator.setStyleSheet(
-            "background-color: #cc0000; border-radius: 6px;"
+        req = BagRecord.Request()
+        req.start = False
+        req.prefix = ""
+        self._call_service(
+            self._bag_record_client, req, self._widget.rosbag_indicator, "#cc0000"
         )
 
     def _arm(self):
