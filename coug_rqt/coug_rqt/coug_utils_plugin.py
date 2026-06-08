@@ -54,13 +54,28 @@ class CougUtilsPlugin(Plugin):
             self._node.declare_parameter("agent_namespaces", [""])
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
+
+        self._agent_namespaces = []
+        self._clients = {}
+        self._current_agent = ""
+        self._agent_state = {}
+        self._indicators = [
+            self._widget.rosbag_indicator,
+            self._widget.armed_indicator,
+            self._widget.acoustics_indicator,
+        ]
+
+        self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         for ns in self._node.get_parameter("agent_namespaces").value:
             if ns:
+                self._agent_namespaces.append(ns)
+                self._clients[ns] = {
+                    "bag_record": self._node.create_client(
+                        BagRecord, f"{ns}/bag_record"
+                    ),
+                }
                 self._widget.agent_selector.addItem(ns)
 
-        self._bag_record_client = None
-        self._current_agent = ""
-        self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         self._widget.rosbag_start.clicked.connect(self._rosbag_start)
         self._widget.rosbag_stop.clicked.connect(self._rosbag_stop)
         self._widget.arm.clicked.connect(self._arm)
@@ -72,58 +87,157 @@ class CougUtilsPlugin(Plugin):
 
     def _on_agent_changed(self, text):
         self._current_agent = text
-        self._bag_record_client = self._node.create_client(
-            BagRecord, f"{text}/bag_record"
-        )
+        state = self._agent_state.get(text, {})
+        for indicator in self._indicators:
+            color = state.get(indicator, "#cc0000")
+            indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
-    def _call_service(self, client, request, indicator, color):
-        if client is None:
+    def _set_indicator(self, ns, indicator, color):
+        self._agent_state.setdefault(ns, {})[indicator] = color
+        if ns == self._current_agent:
+            indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
+
+    def _print_info(self, text):
+        self._node.get_logger().info(text)
+        self._widget.status.setText(text)
+        self._widget.status.setStyleSheet("color: #008000;")
+
+    def _print_warn(self, text):
+        self._node.get_logger().warning(text)
+        self._widget.status.setText(text)
+        self._widget.status.setStyleSheet("color: #808000;")
+
+    def _print_error(self, text):
+        self._node.get_logger().error(text)
+        self._widget.status.setText(text)
+        self._widget.status.setStyleSheet("color: red;")
+
+    def _call_service(self, service_name, request, indicator, color, on_success=None):
+        if on_success is None:
+            on_success = self._print_info
+        if self._widget.apply_all.isChecked():
+            if not self._agent_namespaces:
+                self._print_error("No agents configured")
+                return
+            self._print_info(f"[{service_name}] calling...")
+            state = {
+                "cmd": service_name,
+                "total": len(self._agent_namespaces),
+                "responded": 0,
+                "succeeded": 0,
+                "failed": [],
+                "on_success": on_success,
+            }
+            for ns in self._agent_namespaces:
+                self._dispatch(ns, service_name, request, indicator, color, state)
+        elif self._current_agent:
+            self._print_info(f"[{service_name}] calling...")
+            self._dispatch(
+                self._current_agent,
+                service_name,
+                request,
+                indicator,
+                color,
+                on_success=on_success,
+            )
+        else:
+            self._print_error("No agent selected")
+
+    def _dispatch(
+        self, ns, service_name, request, indicator, color, state=None, on_success=None
+    ):
+        client = self._clients.get(ns, {}).get(service_name)
+        if client is None or not client.service_is_ready():
+            if state is not None:
+                QTimer.singleShot(
+                    0, lambda: self._record_result(state, ns, False, indicator, color)
+                )
+            else:
+                self._print_error(f"Service not available: {ns}/{service_name}")
             return
         future = client.call_async(request)
         future.add_done_callback(
             lambda f: QTimer.singleShot(
-                0, lambda: self._on_service_done(f, indicator, color)
+                0,
+                lambda: self._on_response(
+                    f, ns, service_name, indicator, color, state, on_success
+                ),
             )
         )
 
-    def _on_service_done(self, future, indicator, color):
-        if future.result() is not None and future.result().success:
-            indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
+    def _on_response(
+        self, future, ns, service_name, indicator, color, state, on_success
+    ):
+        result = future.result()
+        success = result is not None and result.success
+        if state is not None:
+            self._record_result(state, ns, success, indicator, color)
+        elif success:
+            self._set_indicator(ns, indicator, color)
+            on_success(f"[{service_name}] {result.message}")
+        elif result is not None:
+            self._print_warn(f"[{service_name}] {result.message}")
+        else:
+            self._print_error("Service call failed (no response)")
+
+    def _record_result(self, state, ns, success, indicator, color):
+        if success:
+            state["succeeded"] += 1
+            self._set_indicator(ns, indicator, color)
+        else:
+            state["failed"].append(ns)
+        state["responded"] += 1
+        if state["responded"] < state["total"]:
+            return
+        s, t, cmd = state["succeeded"], state["total"], state["cmd"]
+        on_success = state["on_success"]
+        if s == t:
+            on_success(f"[{cmd}] All {t} agent(s) confirmed")
+        elif s > 0:
+            self._print_warn(
+                f"[{cmd}] {s}/{t} confirmed; failed: {' '.join(state['failed'])}"
+            )
+        else:
+            self._print_error(
+                f"[{cmd}] 0/{t} confirmed; failed: {' '.join(state['failed'])}"
+            )
 
     def _rosbag_start(self):
         req = BagRecord.Request()
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
-        self._call_service(
-            self._bag_record_client, req, self._widget.rosbag_indicator, "#00cc00"
-        )
+        self._call_service("bag_record", req, self._widget.rosbag_indicator, "#00cc00")
 
     def _rosbag_stop(self):
         req = BagRecord.Request()
         req.start = False
         req.prefix = ""
         self._call_service(
-            self._bag_record_client, req, self._widget.rosbag_indicator, "#cc0000"
+            "bag_record",
+            req,
+            self._widget.rosbag_indicator,
+            "#cc0000",
+            on_success=self._print_warn,
         )
 
     def _arm(self):
-        self._widget.armed_indicator.setStyleSheet(
-            "background-color: #00cc00; border-radius: 6px;"
+        self._set_indicator(
+            self._current_agent, self._widget.armed_indicator, "#00cc00"
         )
 
     def _disarm(self):
-        self._widget.armed_indicator.setStyleSheet(
-            "background-color: #cc0000; border-radius: 6px;"
+        self._set_indicator(
+            self._current_agent, self._widget.armed_indicator, "#cc0000"
         )
 
     def _acoustics_on(self):
-        self._widget.acoustics_indicator.setStyleSheet(
-            "background-color: #00cc00; border-radius: 6px;"
+        self._set_indicator(
+            self._current_agent, self._widget.acoustics_indicator, "#00cc00"
         )
 
     def _acoustics_off(self):
-        self._widget.acoustics_indicator.setStyleSheet(
-            "background-color: #cc0000; border-radius: 6px;"
+        self._set_indicator(
+            self._current_agent, self._widget.acoustics_indicator, "#cc0000"
         )
 
     def _emergency_stop(self):
@@ -133,7 +247,10 @@ class CougUtilsPlugin(Plugin):
         pass
 
     def shutdown_plugin(self):
-        pass
+        for ns_clients in self._clients.values():
+            for client in ns_clients.values():
+                self._node.destroy_client(client)
+        self._clients = {}
 
     def save_settings(self, _plugin_settings, _instance_settings):
         pass
