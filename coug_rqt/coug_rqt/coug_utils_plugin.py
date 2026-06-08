@@ -23,7 +23,7 @@ from rqt_gui_py.plugin import Plugin
 
 class CougUtilsPlugin(Plugin):
     """
-    RQT panel for per-agent utility commands (arm/disarm and DVL controls).
+    RQT panel for per-agent utility commands.
 
     :author: Nelson Durrant
     :date: June 2026
@@ -58,13 +58,27 @@ class CougUtilsPlugin(Plugin):
 
         self._current_agent = ""
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
+        self._widget.rosbag_start.clicked.connect(self._rosbag_start)
+        self._widget.rosbag_stop.clicked.connect(self._rosbag_stop)
         self._widget.arm.clicked.connect(self._arm)
         self._widget.disarm.clicked.connect(self._disarm)
-        self._widget.dvl_on.clicked.connect(self._dvl_on)
-        self._widget.dvl_off.clicked.connect(self._dvl_off)
+        self._widget.acoustics_on.clicked.connect(self._acoustics_on)
+        self._widget.acoustics_off.clicked.connect(self._acoustics_off)
+        self._widget.emergency_stop.clicked.connect(self._emergency_stop)
+        self._widget.emergency_surface.clicked.connect(self._emergency_surface)
 
     def _on_agent_changed(self, text):
         self._current_agent = text
+
+    def _rosbag_start(self):
+        self._widget.rosbag_indicator.setStyleSheet(
+            "background-color: #00cc00; border-radius: 6px;"
+        )
+
+    def _rosbag_stop(self):
+        self._widget.rosbag_indicator.setStyleSheet(
+            "background-color: #cc0000; border-radius: 6px;"
+        )
 
     def _arm(self):
         self._widget.armed_indicator.setStyleSheet(
@@ -76,15 +90,21 @@ class CougUtilsPlugin(Plugin):
             "background-color: #cc0000; border-radius: 6px;"
         )
 
-    def _dvl_on(self):
-        self._widget.dvl_indicator.setStyleSheet(
+    def _acoustics_on(self):
+        self._widget.acoustics_indicator.setStyleSheet(
             "background-color: #00cc00; border-radius: 6px;"
         )
 
-    def _dvl_off(self):
-        self._widget.dvl_indicator.setStyleSheet(
+    def _acoustics_off(self):
+        self._widget.acoustics_indicator.setStyleSheet(
             "background-color: #cc0000; border-radius: 6px;"
         )
+
+    def _emergency_stop(self):
+        pass
+
+    def _emergency_surface(self):
+        pass
 
     def shutdown_plugin(self):
         pass
