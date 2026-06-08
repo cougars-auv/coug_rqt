@@ -40,7 +40,7 @@
             "dock_widget__CougUtilsPanelUi": {
               "keys": {
                 "dock_widget_title": {
-                  "repr": "'Coug Utils'",
+                  "repr": "'CoUGARs Utils'",
                   "type": "repr"
                 },
                 "dockable": {
