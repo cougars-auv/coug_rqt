@@ -52,6 +52,7 @@ class CougUtilsPlugin(Plugin):
         self._node = context.node
         try:
             self._node.declare_parameter("agent_namespaces", [""])
+            self._node.declare_parameter("bag_record_service", "bag_record")
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
 
@@ -64,14 +65,15 @@ class CougUtilsPlugin(Plugin):
             self._widget.armed_indicator,
             self._widget.acoustics_indicator,
         ]
+        self._bag_record_service = self._node.get_parameter("bag_record_service").value
 
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         for ns in self._node.get_parameter("agent_namespaces").value:
             if ns:
                 self._agent_namespaces.append(ns)
                 self._clients[ns] = {
-                    "bag_record": self._node.create_client(
-                        BagRecord, f"{ns}/bag_record"
+                    self._bag_record_service: self._node.create_client(
+                        BagRecord, f"{ns}/{self._bag_record_service}"
                     ),
                 }
                 self._widget.agent_selector.addItem(ns)
@@ -206,14 +208,16 @@ class CougUtilsPlugin(Plugin):
         req = BagRecord.Request()
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
-        self._call_service("bag_record", req, self._widget.rosbag_indicator, "#00cc00")
+        self._call_service(
+            self._bag_record_service, req, self._widget.rosbag_indicator, "#00cc00"
+        )
 
     def _rosbag_stop(self):
         req = BagRecord.Request()
         req.start = False
         req.prefix = ""
         self._call_service(
-            "bag_record",
+            self._bag_record_service,
             req,
             self._widget.rosbag_indicator,
             "#cc0000",

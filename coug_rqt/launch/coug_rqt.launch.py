@@ -19,7 +19,11 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import (
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
 
 
 def launch_setup(context, *args, **kwargs) -> list:
@@ -31,6 +35,14 @@ def launch_setup(context, *args, **kwargs) -> list:
 
     pkg_share = get_package_share_directory("coug_rqt")
 
+    fleet_params = PathJoinSubstitution(
+        [
+            EnvironmentVariable("CONFIG_DIR"),
+            "fleet",
+            "coug_rqt_params.yaml",
+        ]
+    )
+
     rqt_perspective_file = os.path.join(pkg_share, "rqt", "rqt.perspective")
 
     template_path = os.path.join(
@@ -39,10 +51,15 @@ def launch_setup(context, *args, **kwargs) -> list:
     with open(template_path, "r") as f:
         template_content = f.read()
 
-    merged_params = {"analyzers": agent_namespaces}
+    merged_params = {"analyzers": agent_namespaces + ["base_station"]}
     for ns in agent_namespaces:
         agent_yaml = yaml.safe_load(template_content.replace("AUV_NS", ns))
         merged_params[ns] = agent_yaml["diagnostic_aggregator"]["ros__parameters"][ns]
+
+    template_yaml = yaml.safe_load(template_content)
+    merged_params["base_station"] = template_yaml["diagnostic_aggregator"][
+        "ros__parameters"
+    ]["base_station"]
 
     merged_config = {"diagnostic_aggregator": {"ros__parameters": merged_params}}
 
@@ -68,7 +85,11 @@ def launch_setup(context, *args, **kwargs) -> list:
             name="rqt_gui",
             arguments=["--perspective-file", rqt_perspective_file],
             parameters=[
-                {"use_sim_time": use_sim_time, "agent_namespaces": agent_namespaces}
+                fleet_params,
+                {
+                    "use_sim_time": use_sim_time,
+                    "agent_namespaces": agent_namespaces,
+                },
             ],
         ),
     ]

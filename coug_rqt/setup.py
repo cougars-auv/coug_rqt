@@ -18,6 +18,7 @@ setup(
             os.path.join("share", package_name, "diagnostics"),
             glob("diagnostics/*.yaml*"),
         ),
+        (os.path.join("share", package_name, "config"), glob("config/*.yaml")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
