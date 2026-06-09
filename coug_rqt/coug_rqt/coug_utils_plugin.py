@@ -192,7 +192,7 @@ class CougUtilsPlugin(Plugin):
         s, t, cmd = state["succeeded"], state["total"], state["cmd"]
         on_success = state["on_success"]
         if s == t:
-            on_success(f"[{cmd}] All {t} agent(s) confirmed")
+            on_success(f"[{cmd}] All {t} agent(s) sent")
         elif s > 0:
             self._print_warn(
                 f"[{cmd}] {s}/{t} confirmed; failed: {' '.join(state['failed'])}"
