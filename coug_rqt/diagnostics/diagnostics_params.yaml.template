@@ -90,11 +90,18 @@ diagnostic_aggregator:
     base_station:
       type: diagnostic_aggregator/AnalyzerGroup
       path: base_station
-      analyzers: ["base_comms_node"]
+      analyzers: ["base_comms_node", "navsat_odom_node"]
 
       base_comms_node:
         type: diagnostic_aggregator/GenericAnalyzer
         path: "base_comms_node"
         regex: [".*base_comms_node.*base_station.*"]
         find_and_remove_prefix: ["base_comms_node: [/base_station] "]
+        timeout: 5.0
+
+      navsat_odom_node:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: "navsat_odom_node"
+        regex: [".*navsat_odom_node.*base_station.*"]
+        find_and_remove_prefix: ["navsat_odom_node: [/base_station] "]
         timeout: 5.0
