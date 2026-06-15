@@ -204,7 +204,7 @@
                 </sizepolicy>
               </property>
               <property name="text">
-                <string>Enable Acoustics</string>
+                <string>Enable DVL Acoustics</string>
               </property>
             </widget>
           </item>
@@ -217,7 +217,7 @@
                 </sizepolicy>
               </property>
               <property name="text">
-                <string>Disable Acoustics</string>
+                <string>Disable DVL Acoustics</string>
               </property>
             </widget>
           </item>
