@@ -88,6 +88,11 @@ class CougUtilsPlugin(Plugin):
         self._widget.emergency_surface.clicked.connect(self._emergency_surface)
 
     def _on_agent_changed(self, text):
+        """
+        Handle change in selected agent text.
+
+        :param text: The selected agent namespace.
+        """
         self._current_agent = text
         state = self._agent_state.get(text, {})
         for indicator in self._indicators:
@@ -95,26 +100,57 @@ class CougUtilsPlugin(Plugin):
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
     def _set_indicator(self, ns, indicator, color):
+        """
+        Set the visual indicator color for a specific agent namespace.
+
+        :param ns: Agent namespace.
+        :param indicator: Indicator widget reference.
+        :param color: Hex color string.
+        """
         self._agent_state.setdefault(ns, {})[indicator] = color
         if ns == self._current_agent:
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
     def _print_info(self, text):
+        """
+        Print informational log message and update panel status.
+
+        :param text: Information message string.
+        """
         self._node.get_logger().info(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #008000;")
 
     def _print_warn(self, text):
+        """
+        Print warning log message and update panel status.
+
+        :param text: Warning message string.
+        """
         self._node.get_logger().warning(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #808000;")
 
     def _print_error(self, text):
+        """
+        Print error log message and update panel status.
+
+        :param text: Error message string.
+        """
         self._node.get_logger().error(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
 
     def _call_service(self, service_name, request, indicator, color, on_success=None):
+        """
+        Call a service on either the currently selected agent or all agents.
+
+        :param service_name: Name of the service to call.
+        :param request: Service request message.
+        :param indicator: Visual indicator widget.
+        :param color: Visual indicator target success color.
+        :param on_success: Optional callback function upon successful response.
+        """
         if on_success is None:
             on_success = self._print_info
         if self._widget.apply_all.isChecked():
@@ -148,6 +184,17 @@ class CougUtilsPlugin(Plugin):
     def _dispatch(
         self, ns, service_name, request, indicator, color, state=None, on_success=None
     ):
+        """
+        Dispatch a service call to a specific agent namespace asynchronously.
+
+        :param ns: Agent namespace.
+        :param service_name: Name of the service.
+        :param request: Service request message.
+        :param indicator: Visual indicator widget.
+        :param color: Visual indicator target success color.
+        :param state: Dispatch state tracking dict for multi-agent calls.
+        :param on_success: Callback function upon successful response.
+        """
         client = self._clients.get(ns, {}).get(service_name)
         if client is None or not client.service_is_ready():
             if state is not None:
@@ -170,6 +217,17 @@ class CougUtilsPlugin(Plugin):
     def _on_response(
         self, future, ns, service_name, indicator, color, state, on_success
     ):
+        """
+        Callback triggered when a service call future completes.
+
+        :param future: The completed future object.
+        :param ns: Agent namespace.
+        :param service_name: Name of the service.
+        :param indicator: Visual indicator widget.
+        :param color: Visual indicator target success color.
+        :param state: Dispatch state tracking dict.
+        :param on_success: Callback function upon successful response.
+        """
         result = future.result()
         success = result is not None and result.success
         if state is not None:
@@ -183,6 +241,15 @@ class CougUtilsPlugin(Plugin):
             self._print_error("Service call failed (no response)")
 
     def _record_result(self, state, ns, success, indicator, color):
+        """
+        Record the success or failure result of a dispatched service call.
+
+        :param state: Dispatch state tracking dict.
+        :param ns: Agent namespace.
+        :param success: Boolean flag indicating success.
+        :param indicator: Visual indicator widget.
+        :param color: Visual indicator target success color.
+        """
         if success:
             state["succeeded"] += 1
             self._set_indicator(ns, indicator, color)
@@ -205,6 +272,9 @@ class CougUtilsPlugin(Plugin):
             )
 
     def _rosbag_start(self):
+        """
+        Trigger the start of rosbag recording.
+        """
         req = BagRecord.Request()
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
@@ -213,6 +283,9 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _rosbag_stop(self):
+        """
+        Trigger the stop of rosbag recording.
+        """
         req = BagRecord.Request()
         req.start = False
         req.prefix = ""
@@ -225,39 +298,72 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _arm(self):
+        """
+        Arm the selected vehicle.
+        """
         self._set_indicator(
             self._current_agent, self._widget.armed_indicator, "#00cc00"
         )
 
     def _disarm(self):
+        """
+        Disarm the selected vehicle.
+        """
         self._set_indicator(
             self._current_agent, self._widget.armed_indicator, "#cc0000"
         )
 
     def _acoustics_on(self):
+        """
+        Enable acoustics on the selected vehicle.
+        """
         self._set_indicator(
             self._current_agent, self._widget.acoustics_indicator, "#00cc00"
         )
 
     def _acoustics_off(self):
+        """
+        Disable acoustics on the selected vehicle.
+        """
         self._set_indicator(
             self._current_agent, self._widget.acoustics_indicator, "#cc0000"
         )
 
     def _emergency_stop(self):
+        """
+        Trigger emergency stop.
+        """
         pass
 
     def _emergency_surface(self):
+        """
+        Trigger emergency surface.
+        """
         pass
 
     def shutdown_plugin(self):
+        """
+        Clean up resources and destroy ROS clients when the plugin is shut down.
+        """
         for ns_clients in self._clients.values():
             for client in ns_clients.values():
                 self._node.destroy_client(client)
         self._clients = {}
 
     def save_settings(self, _plugin_settings, _instance_settings):
+        """
+        Save plugin settings.
+
+        :param _plugin_settings: Plugin settings profile.
+        :param _instance_settings: Instance settings profile.
+        """
         pass
 
     def restore_settings(self, _plugin_settings, _instance_settings):
+        """
+        Restore plugin settings.
+
+        :param _plugin_settings: Plugin settings profile.
+        :param _instance_settings: Instance settings profile.
+        """
         pass
