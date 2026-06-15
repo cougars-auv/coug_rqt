@@ -21,6 +21,7 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QTimer
 from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
+from std_srvs.srv import Trigger
 
 
 class CougUtilsPlugin(Plugin):
@@ -53,6 +54,12 @@ class CougUtilsPlugin(Plugin):
         try:
             self._node.declare_parameter("agent_namespaces", [""])
             self._node.declare_parameter("bag_record_service", "bag_record")
+            self._node.declare_parameter(
+                "emergency_stop_service", "base/emergency_stop"
+            )
+            self._node.declare_parameter(
+                "emergency_surface_service", "base/emergency_surface"
+            )
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
 
@@ -66,6 +73,12 @@ class CougUtilsPlugin(Plugin):
             self._widget.acoustics_indicator,
         ]
         self._bag_record_service = self._node.get_parameter("bag_record_service").value
+        self._emergency_stop_service = self._node.get_parameter(
+            "emergency_stop_service"
+        ).value
+        self._emergency_surface_service = self._node.get_parameter(
+            "emergency_surface_service"
+        ).value
 
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         for ns in self._node.get_parameter("agent_namespaces").value:
@@ -74,6 +87,12 @@ class CougUtilsPlugin(Plugin):
                 self._clients[ns] = {
                     self._bag_record_service: self._node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
+                    ),
+                    self._emergency_stop_service: self._node.create_client(
+                        Trigger, f"{ns}/{self._emergency_stop_service}"
+                    ),
+                    self._emergency_surface_service: self._node.create_client(
+                        Trigger, f"{ns}/{self._emergency_surface_service}"
                     ),
                 }
                 self._widget.agent_selector.addItem(ns)
@@ -107,6 +126,8 @@ class CougUtilsPlugin(Plugin):
         :param indicator: Indicator widget reference.
         :param color: Hex color string.
         """
+        if indicator is None:
+            return
         self._agent_state.setdefault(ns, {})[indicator] = color
         if ns == self._current_agent:
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
@@ -333,13 +354,25 @@ class CougUtilsPlugin(Plugin):
         """
         Trigger emergency stop.
         """
-        pass
+        self._call_service(
+            self._emergency_stop_service,
+            Trigger.Request(),
+            None,
+            None,
+            on_success=self._print_warn,
+        )
 
     def _emergency_surface(self):
         """
         Trigger emergency surface.
         """
-        pass
+        self._call_service(
+            self._emergency_surface_service,
+            Trigger.Request(),
+            None,
+            None,
+            on_success=self._print_warn,
+        )
 
     def shutdown_plugin(self):
         """
