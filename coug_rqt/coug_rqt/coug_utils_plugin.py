@@ -13,13 +13,16 @@
 # limitations under the License.
 
 import os
+import threading
 
+import rclpy
 import rclpy.exceptions
 from ament_index_python.packages import get_package_share_directory
 from coug_interfaces.srv import BagRecord
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QTimer
+from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtWidgets import QWidget
+from rclpy.executors import SingleThreadedExecutor
 from rqt_gui_py.plugin import Plugin
 from std_srvs.srv import Trigger
 
@@ -32,9 +35,12 @@ class CougUtilsPlugin(Plugin):
     :date: June 2026
     """
 
+    _deliver = Signal(object)
+
     def __init__(self, context):
         super().__init__(context)
         self.setObjectName("CougUtilsPlugin")
+        self._deliver.connect(self._run_on_gui_thread)
 
         self._widget = QWidget()
         loadUi(
@@ -51,6 +57,15 @@ class CougUtilsPlugin(Plugin):
         context.add_widget(self._widget)
 
         self._node = context.node
+
+        self._srv_node = rclpy.create_node(
+            "coug_utils_srv_client", context=context.node.context
+        )
+        self._srv_executor = SingleThreadedExecutor(context=context.node.context)
+        self._srv_executor.add_node(self._srv_node)
+        self._srv_thread = threading.Thread(target=self._srv_executor.spin, daemon=True)
+        self._srv_thread.start()
+
         try:
             self._node.declare_parameter("agent_namespaces", [""])
             self._node.declare_parameter("bag_record_service", "bag_record")
@@ -85,13 +100,13 @@ class CougUtilsPlugin(Plugin):
             if ns:
                 self._agent_namespaces.append(ns)
                 self._clients[ns] = {
-                    self._bag_record_service: self._node.create_client(
+                    self._bag_record_service: self._srv_node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
                     ),
-                    self._emergency_stop_service: self._node.create_client(
+                    self._emergency_stop_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_stop_service}"
                     ),
-                    self._emergency_surface_service: self._node.create_client(
+                    self._emergency_surface_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_surface_service}"
                     ),
                 }
@@ -202,6 +217,14 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("No agent selected")
 
+    def _run_on_gui_thread(self, fn):
+        """
+        Run a callable on the Qt GUI thread.
+
+        :param fn: Zero-argument callable to run.
+        """
+        fn()
+
     def _dispatch(
         self, ns, service_name, request, indicator, color, state=None, on_success=None
     ):
@@ -219,19 +242,19 @@ class CougUtilsPlugin(Plugin):
         client = self._clients.get(ns, {}).get(service_name)
         if client is None or not client.service_is_ready():
             if state is not None:
-                QTimer.singleShot(
-                    0, lambda: self._record_result(state, ns, False, indicator, color)
+                self._deliver.emit(
+                    lambda: self._record_result(state, ns, False, indicator, color)
                 )
             else:
                 self._print_error(f"Service not available: {ns}/{service_name}")
             return
+
         future = client.call_async(request)
         future.add_done_callback(
-            lambda f: QTimer.singleShot(
-                0,
+            lambda f: self._deliver.emit(
                 lambda: self._on_response(
                     f, ns, service_name, indicator, color, state, on_success
-                ),
+                )
             )
         )
 
@@ -376,12 +399,16 @@ class CougUtilsPlugin(Plugin):
 
     def shutdown_plugin(self):
         """
-        Clean up resources and destroy ROS clients when the plugin is shut down.
+        Clean up clients, executor, thread, and node when the plugin shuts down.
         """
         for ns_clients in self._clients.values():
             for client in ns_clients.values():
-                self._node.destroy_client(client)
+                self._srv_node.destroy_client(client)
         self._clients = {}
+
+        self._srv_executor.shutdown()
+        self._srv_thread.join(timeout=1.0)
+        self._srv_node.destroy_node()
 
     def save_settings(self, _plugin_settings, _instance_settings):
         """
