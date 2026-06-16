@@ -15,8 +15,8 @@ setup(
         (os.path.join("share", package_name, "rqt"), glob("rqt/*.perspective")),
         (os.path.join("share", package_name, "ui"), glob("ui/*.ui")),
         (
-            os.path.join("share", package_name, "diagnostics"),
-            glob("diagnostics/*.yaml*"),
+            os.path.join("share", package_name, "diagnostic_aggregator"),
+            glob("diagnostic_aggregator/*.yaml*"),
         ),
         (os.path.join("share", package_name, "config"), glob("config/*.yaml")),
     ],
