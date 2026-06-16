@@ -178,7 +178,7 @@ class CougUtilsPlugin(Plugin):
             if not self._agent_namespaces:
                 self._print_error("No agents configured")
                 return
-            self._print_info(f"[{service_name}] calling...")
+            self._print_info(f"[{service_name}] Calling service...")
             state = {
                 "cmd": service_name,
                 "total": len(self._agent_namespaces),
@@ -190,7 +190,7 @@ class CougUtilsPlugin(Plugin):
             for ns in self._agent_namespaces:
                 self._dispatch(ns, service_name, request, indicator, color, state)
         elif self._current_agent:
-            self._print_info(f"[{service_name}] calling...")
+            self._print_info(f"[{service_name}] Calling service...")
             self._dispatch(
                 self._current_agent,
                 service_name,
