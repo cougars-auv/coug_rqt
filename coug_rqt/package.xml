@@ -8,6 +8,7 @@
   <license>Apache-2.0</license>
 
   <exec_depend>coug_interfaces</exec_depend>
+  <exec_depend>dvl_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>rqt_gui</exec_depend>
   <exec_depend>rqt_gui_py</exec_depend>

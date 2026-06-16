@@ -19,10 +19,12 @@ import rclpy
 import rclpy.exceptions
 from ament_index_python.packages import get_package_share_directory
 from coug_interfaces.srv import BagRecord
+from dvl_msgs.msg import ConfigCommand
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtWidgets import QWidget
 from rclpy.executors import SingleThreadedExecutor
+from rclpy.qos import qos_profile_system_default
 from rqt_gui_py.plugin import Plugin
 from std_srvs.srv import Trigger
 
@@ -75,11 +77,13 @@ class CougUtilsPlugin(Plugin):
             self._node.declare_parameter(
                 "emergency_surface_service", "base/emergency_surface"
             )
+            self._node.declare_parameter("config_command_topic", "dvl/config/command")
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
 
         self._agent_namespaces = []
         self._clients = {}
+        self._pubs = {}
         self._current_agent = ""
         self._agent_state = {}
         self._indicators = [
@@ -94,6 +98,14 @@ class CougUtilsPlugin(Plugin):
         self._emergency_surface_service = self._node.get_parameter(
             "emergency_surface_service"
         ).value
+        self._config_command_topic = self._node.get_parameter(
+            "config_command_topic"
+        ).value
+
+        # In sim, thrusters and acoustics start enabled (green); otherwise off (red).
+        sim_color = (
+            "#00cc00" if self._node.get_parameter("use_sim_time").value else "#cc0000"
+        )
 
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
         for ns in self._node.get_parameter("agent_namespaces").value:
@@ -110,6 +122,13 @@ class CougUtilsPlugin(Plugin):
                         Trigger, f"{ns}/{self._emergency_surface_service}"
                     ),
                 }
+                self._pubs[ns] = self._srv_node.create_publisher(
+                    ConfigCommand,
+                    f"{ns}/{self._config_command_topic}",
+                    qos_profile_system_default,
+                )
+                self._set_indicator(ns, self._widget.armed_indicator, sim_color)
+                self._set_indicator(ns, self._widget.acoustics_indicator, sim_color)
                 self._widget.agent_selector.addItem(ns)
 
         self._widget.rosbag_start.clicked.connect(self._rosbag_start)
@@ -214,6 +233,32 @@ class CougUtilsPlugin(Plugin):
                 color,
                 on_success=on_success,
             )
+        else:
+            self._print_error("No agent selected")
+
+    def _publish_command(self, msg, indicator, color, on_success=None):
+        """
+        Publish a command on either the currently selected agent or all agents.
+
+        :param msg: Command message to publish.
+        :param indicator: Visual indicator widget.
+        :param color: Visual indicator target success color.
+        :param on_success: Optional callback function upon successful publish.
+        """
+        if on_success is None:
+            on_success = self._print_info
+        if self._widget.apply_all.isChecked():
+            if not self._agent_namespaces:
+                self._print_error("No agents configured")
+                return
+            for ns in self._agent_namespaces:
+                self._pubs[ns].publish(msg)
+                self._set_indicator(ns, indicator, color)
+            on_success(f"Published {len(self._agent_namespaces)} agent(s)")
+        elif self._current_agent:
+            self._pubs[self._current_agent].publish(msg)
+            self._set_indicator(self._current_agent, indicator, color)
+            on_success("Published 1 agent(s)")
         else:
             self._print_error("No agent selected")
 
@@ -357,20 +402,37 @@ class CougUtilsPlugin(Plugin):
             self._current_agent, self._widget.armed_indicator, "#cc0000"
         )
 
+    def _acoustics_command(self, enabled):
+        """
+        Build a DVL set_config command for acoustics.
+
+        :param enabled: True to enable acoustics, False to disable.
+        """
+        msg = ConfigCommand()
+        msg.command = "set_config"
+        msg.parameter_name = "acoustic_enabled"
+        msg.parameter_value = "true" if enabled else "false"
+        return msg
+
     def _acoustics_on(self):
         """
-        Enable acoustics on the selected vehicle.
+        Enable DVL acoustics on the selected vehicle.
         """
-        self._set_indicator(
-            self._current_agent, self._widget.acoustics_indicator, "#00cc00"
+        self._publish_command(
+            self._acoustics_command(True),
+            self._widget.acoustics_indicator,
+            "#00cc00",
         )
 
     def _acoustics_off(self):
         """
-        Disable acoustics on the selected vehicle.
+        Disable DVL acoustics on the selected vehicle.
         """
-        self._set_indicator(
-            self._current_agent, self._widget.acoustics_indicator, "#cc0000"
+        self._publish_command(
+            self._acoustics_command(False),
+            self._widget.acoustics_indicator,
+            "#cc0000",
+            on_success=self._print_warn,
         )
 
     def _emergency_stop(self):
@@ -405,6 +467,10 @@ class CougUtilsPlugin(Plugin):
             for client in ns_clients.values():
                 self._srv_node.destroy_client(client)
         self._clients = {}
+
+        for publisher in self._pubs.values():
+            self._srv_node.destroy_publisher(publisher)
+        self._pubs = {}
 
         self._srv_executor.shutdown()
         self._srv_thread.join(timeout=1.0)

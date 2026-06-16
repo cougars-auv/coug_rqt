@@ -3,3 +3,7 @@ repositories:
     type: git
     url: https://github.com/cougars-auv/coug_interfaces.git
     version: main
+  dvl_msgs:
+    type: zip
+    url: https://github.com/paagutie/dvl_msgs/archive/refs/heads/master.zip
+    version: dvl_msgs-master
