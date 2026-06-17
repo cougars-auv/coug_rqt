@@ -61,7 +61,9 @@ class CougUtilsPlugin(Plugin):
         self._node = context.node
 
         self._srv_node = rclpy.create_node(
-            "coug_utils_srv_client", context=context.node.context
+            "coug_utils_plugin_node",
+            context=context.node.context,
+            use_global_arguments=False,  # IMPORTANT!
         )
         self._srv_executor = SingleThreadedExecutor(context=context.node.context)
         self._srv_executor.add_node(self._srv_node)
