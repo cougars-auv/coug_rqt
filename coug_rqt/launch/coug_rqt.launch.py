@@ -42,10 +42,10 @@ def launch_setup(context, *args, **kwargs) -> list:
         ]
     )
 
-    rqt_perspective_file = os.path.join(pkg_share, "rqt", "rqt.perspective")
+    rqt_perspective_file = os.path.join(pkg_share, "config", "rqt_config.perspective")
 
     template_path = os.path.join(
-        pkg_share, "diagnostic_aggregator", "diagnostic_aggregator_params.yaml.template"
+        pkg_share, "config", "diagnostic_aggregator_params.yaml.template"
     )
     with open(template_path, "r") as f:
         template_content = f.read()

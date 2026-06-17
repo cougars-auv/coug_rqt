@@ -12,13 +12,13 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml", "plugin.xml"]),
         (os.path.join("share", package_name, "launch"), glob("launch/*.launch.py")),
-        (os.path.join("share", package_name, "rqt"), glob("rqt/*.perspective")),
         (os.path.join("share", package_name, "ui"), glob("ui/*.ui")),
         (
-            os.path.join("share", package_name, "diagnostic_aggregator"),
-            glob("diagnostic_aggregator/*.yaml*"),
+            os.path.join("share", package_name, "config"),
+            glob("config/*.yaml")
+            + glob("config/*.yaml.template")
+            + glob("config/*.perspective"),
         ),
-        (os.path.join("share", package_name, "config"), glob("config/*.yaml")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
