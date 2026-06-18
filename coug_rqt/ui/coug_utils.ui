@@ -148,7 +148,7 @@
       <item row="3" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_arm">
           <item>
-            <widget class="QPushButton" name="arm">
+            <widget class="QPushButton" name="arm_thrusters">
               <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -161,7 +161,7 @@
             </widget>
           </item>
           <item>
-            <widget class="QPushButton" name="disarm">
+            <widget class="QPushButton" name="disarm_thrusters">
               <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -196,7 +196,7 @@
       <item row="4" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_acoustics">
           <item>
-            <widget class="QPushButton" name="acoustics_on">
+            <widget class="QPushButton" name="enable_dvl_acoustics">
               <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -209,7 +209,7 @@
             </widget>
           </item>
           <item>
-            <widget class="QPushButton" name="acoustics_off">
+            <widget class="QPushButton" name="disable_dvl_acoustics">
               <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>

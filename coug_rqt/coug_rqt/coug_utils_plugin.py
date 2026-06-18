@@ -135,10 +135,10 @@ class CougUtilsPlugin(Plugin):
 
         self._widget.rosbag_start.clicked.connect(self._rosbag_start)
         self._widget.rosbag_stop.clicked.connect(self._rosbag_stop)
-        self._widget.arm.clicked.connect(self._arm)
-        self._widget.disarm.clicked.connect(self._disarm)
-        self._widget.acoustics_on.clicked.connect(self._acoustics_on)
-        self._widget.acoustics_off.clicked.connect(self._acoustics_off)
+        self._widget.arm_thrusters.clicked.connect(self._arm_thrusters)
+        self._widget.disarm_thrusters.clicked.connect(self._disarm_thrusters)
+        self._widget.enable_dvl_acoustics.clicked.connect(self._enable_dvl_acoustics)
+        self._widget.disable_dvl_acoustics.clicked.connect(self._disable_dvl_acoustics)
         self._widget.emergency_stop.clicked.connect(self._emergency_stop)
         self._widget.emergency_surface.clicked.connect(self._emergency_surface)
 
@@ -224,10 +224,12 @@ class CougUtilsPlugin(Plugin):
                 "on_success": on_success,
             }
             for ns in self._agent_namespaces:
-                self._dispatch(ns, service_name, request, indicator, color, state)
+                self._call_agent_service(
+                    ns, service_name, request, indicator, color, state
+                )
         elif self._current_agent:
             self._print_info(f"[{service_name}] Calling service...")
-            self._dispatch(
+            self._call_agent_service(
                 self._current_agent,
                 service_name,
                 request,
@@ -272,18 +274,18 @@ class CougUtilsPlugin(Plugin):
         """
         fn()
 
-    def _dispatch(
+    def _call_agent_service(
         self, ns, service_name, request, indicator, color, state=None, on_success=None
     ):
         """
-        Dispatch a service call to a specific agent namespace asynchronously.
+        Call a service on a specific agent namespace asynchronously.
 
         :param ns: Agent namespace.
         :param service_name: Name of the service.
         :param request: Service request message.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
-        :param state: Dispatch state tracking dict for multi-agent calls.
+        :param state: Call state tracking dict for multi-agent calls.
         :param on_success: Callback function upon successful response.
         """
         client = self._clients.get(ns, {}).get(service_name)
@@ -316,7 +318,7 @@ class CougUtilsPlugin(Plugin):
         :param service_name: Name of the service.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
-        :param state: Dispatch state tracking dict.
+        :param state: Call state tracking dict.
         :param on_success: Callback function upon successful response.
         """
         result = future.result()
@@ -333,9 +335,9 @@ class CougUtilsPlugin(Plugin):
 
     def _record_result(self, state, ns, success, indicator, color):
         """
-        Record the success or failure result of a dispatched service call.
+        Record the success or failure result of a service call.
 
-        :param state: Dispatch state tracking dict.
+        :param state: Call state tracking dict.
         :param ns: Agent namespace.
         :param success: Boolean flag indicating success.
         :param indicator: Visual indicator widget.
@@ -388,7 +390,7 @@ class CougUtilsPlugin(Plugin):
             on_success=self._print_warn,
         )
 
-    def _arm(self):
+    def _arm_thrusters(self):
         """
         Arm the selected vehicle.
         """
@@ -396,7 +398,7 @@ class CougUtilsPlugin(Plugin):
             self._current_agent, self._widget.armed_indicator, "#00cc00"
         )
 
-    def _disarm(self):
+    def _disarm_thrusters(self):
         """
         Disarm the selected vehicle.
         """
@@ -416,7 +418,7 @@ class CougUtilsPlugin(Plugin):
         msg.parameter_value = "true" if enabled else "false"
         return msg
 
-    def _acoustics_on(self):
+    def _enable_dvl_acoustics(self):
         """
         Enable DVL acoustics on the selected vehicle.
         """
@@ -426,7 +428,7 @@ class CougUtilsPlugin(Plugin):
             "#00cc00",
         )
 
-    def _acoustics_off(self):
+    def _disable_dvl_acoustics(self):
         """
         Disable DVL acoustics on the selected vehicle.
         """
