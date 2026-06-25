@@ -392,7 +392,7 @@ class CougUtilsPlugin(Plugin):
 
     def _arm_thrusters(self):
         """
-        Arm the selected vehicle.
+        Arm the selected agent.
         """
         self._set_indicator(
             self._current_agent, self._widget.armed_indicator, "#00cc00"
@@ -400,7 +400,7 @@ class CougUtilsPlugin(Plugin):
 
     def _disarm_thrusters(self):
         """
-        Disarm the selected vehicle.
+        Disarm the selected agent.
         """
         self._set_indicator(
             self._current_agent, self._widget.armed_indicator, "#cc0000"
@@ -420,7 +420,7 @@ class CougUtilsPlugin(Plugin):
 
     def _enable_dvl_acoustics(self):
         """
-        Enable DVL acoustics on the selected vehicle.
+        Enable DVL acoustics on the selected agent.
         """
         self._publish_command(
             self._acoustics_command(True),
@@ -430,7 +430,7 @@ class CougUtilsPlugin(Plugin):
 
     def _disable_dvl_acoustics(self):
         """
-        Disable DVL acoustics on the selected vehicle.
+        Disable DVL acoustics on the selected agent.
         """
         self._publish_command(
             self._acoustics_command(False),
