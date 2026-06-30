@@ -4,6 +4,6 @@
     battery_status_topic: "battery/status"
 
     bag_record_service: "bag_record"
-    thruster_arm_service: "thruster/arm"
+    arm_thruster_service: "thruster/arm"
     emergency_stop_service: "base/emergency_stop"
     emergency_surface_service: "base/emergency_surface"

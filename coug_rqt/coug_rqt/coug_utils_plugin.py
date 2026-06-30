@@ -75,7 +75,7 @@ class CougUtilsPlugin(Plugin):
         try:
             self._node.declare_parameter("agent_namespaces", [""])
             self._node.declare_parameter("bag_record_service", "bag_record")
-            self._node.declare_parameter("thruster_arm_service", "thruster/arm")
+            self._node.declare_parameter("arm_thruster_service", "thruster/arm")
             self._node.declare_parameter(
                 "emergency_stop_service", "base/emergency_stop"
             )
@@ -100,7 +100,7 @@ class CougUtilsPlugin(Plugin):
             self._widget.acoustics_indicator,
         ]
         self._bag_record_service = self._node.get_parameter("bag_record_service").value
-        self._arm_service = self._node.get_parameter("thruster_arm_service").value
+        self._arm_thruster_srv = self._node.get_parameter("arm_thruster_service").value
         self._emergency_stop_service = self._node.get_parameter(
             "emergency_stop_service"
         ).value
@@ -128,8 +128,8 @@ class CougUtilsPlugin(Plugin):
                     self._bag_record_service: self._srv_node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
                     ),
-                    self._arm_service: self._srv_node.create_client(
-                        SetBool, f"{ns}/{self._arm_service}"
+                    self._arm_thruster_srv: self._srv_node.create_client(
+                        SetBool, f"{ns}/{self._arm_thruster_srv}"
                     ),
                     self._emergency_stop_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_stop_service}"
@@ -433,7 +433,7 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = True
         self._call_service(
-            self._arm_service, req, self._widget.armed_indicator, "#00cc00"
+            self._arm_thruster_srv, req, self._widget.armed_indicator, "#00cc00"
         )
 
     def _disarm_thrusters(self):
@@ -443,7 +443,7 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = False
         self._call_service(
-            self._arm_service,
+            self._arm_thruster_srv,
             req,
             self._widget.armed_indicator,
             "#cc0000",
