@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os
 import threading
 
@@ -26,6 +27,7 @@ from python_qt_binding.QtWidgets import QWidget
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
 from rqt_gui_py.plugin import Plugin
+from sensor_msgs.msg import BatteryState
 from std_srvs.srv import Trigger
 
 
@@ -80,12 +82,15 @@ class CougUtilsPlugin(Plugin):
                 "emergency_surface_service", "base/emergency_surface"
             )
             self._node.declare_parameter("config_command_topic", "dvl/config/command")
+            self._node.declare_parameter("battery_status_topic", "battery/status")
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
 
         self._agent_namespaces = []
         self._clients = {}
         self._pubs = {}
+        self._battery_subs = {}
+        self._battery_voltages = {}
         self._current_agent = ""
         self._agent_state = {}
         self._indicators = [
@@ -103,6 +108,9 @@ class CougUtilsPlugin(Plugin):
         self._config_command_topic = self._node.get_parameter(
             "config_command_topic"
         ).value
+        self._battery_status_topic = self._node.get_parameter(
+            "battery_status_topic"
+        ).value
 
         # In sim, thrusters and acoustics start enabled (green); otherwise off (red).
         sim_color = (
@@ -113,6 +121,7 @@ class CougUtilsPlugin(Plugin):
         for ns in self._node.get_parameter("agent_namespaces").value:
             if ns:
                 self._agent_namespaces.append(ns)
+                self._battery_voltages[ns] = "Unknown"
                 self._clients[ns] = {
                     self._bag_record_service: self._srv_node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
@@ -128,6 +137,12 @@ class CougUtilsPlugin(Plugin):
                     ConfigCommand,
                     f"{ns}/{self._config_command_topic}",
                     qos_profile_system_default,
+                )
+                self._battery_subs[ns] = self._srv_node.create_subscription(
+                    BatteryState,
+                    f"{ns}/{self._battery_status_topic}",
+                    lambda msg, agent_ns=ns: self._on_battery_status(msg, agent_ns),
+                    10,
                 )
                 self._set_indicator(ns, self._widget.armed_indicator, sim_color)
                 self._set_indicator(ns, self._widget.acoustics_indicator, sim_color)
@@ -153,6 +168,22 @@ class CougUtilsPlugin(Plugin):
         for indicator in self._indicators:
             color = state.get(indicator, "#cc0000")
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
+
+        voltage = self._battery_voltages.get(text, "Unknown")
+        self._widget.battery_status.setText(voltage)
+
+    def _on_battery_status(self, msg, agent_ns):
+        """
+        Handle battery status updates.
+
+        :param msg: BatteryState message.
+        :param agent_ns: Namespace of the agent.
+        """
+        val = msg.voltage
+        txt = "Unknown" if math.isnan(val) or val < 0.0 else f"{val:.2f} V"
+        self._battery_voltages[agent_ns] = txt
+        if agent_ns == self._current_agent:
+            self._deliver.emit(lambda: self._widget.battery_status.setText(txt))
 
     def _set_indicator(self, ns, indicator, color):
         """
@@ -475,6 +506,10 @@ class CougUtilsPlugin(Plugin):
         for publisher in self._pubs.values():
             self._srv_node.destroy_publisher(publisher)
         self._pubs = {}
+
+        for sub in self._battery_subs.values():
+            self._srv_node.destroy_subscription(sub)
+        self._battery_subs = {}
 
         self._srv_executor.shutdown()
         self._srv_thread.join(timeout=1.0)
