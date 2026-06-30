@@ -28,7 +28,7 @@ from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
 from rqt_gui_py.plugin import Plugin
 from sensor_msgs.msg import BatteryState
-from std_srvs.srv import Trigger
+from std_srvs.srv import SetBool, Trigger
 
 
 class CougUtilsPlugin(Plugin):
@@ -75,6 +75,7 @@ class CougUtilsPlugin(Plugin):
         try:
             self._node.declare_parameter("agent_namespaces", [""])
             self._node.declare_parameter("bag_record_service", "bag_record")
+            self._node.declare_parameter("thruster_arm_service", "thruster/arm")
             self._node.declare_parameter(
                 "emergency_stop_service", "base/emergency_stop"
             )
@@ -99,6 +100,7 @@ class CougUtilsPlugin(Plugin):
             self._widget.acoustics_indicator,
         ]
         self._bag_record_service = self._node.get_parameter("bag_record_service").value
+        self._arm_service = self._node.get_parameter("thruster_arm_service").value
         self._emergency_stop_service = self._node.get_parameter(
             "emergency_stop_service"
         ).value
@@ -125,6 +127,9 @@ class CougUtilsPlugin(Plugin):
                 self._clients[ns] = {
                     self._bag_record_service: self._srv_node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
+                    ),
+                    self._arm_service: self._srv_node.create_client(
+                        SetBool, f"{ns}/{self._arm_service}"
                     ),
                     self._emergency_stop_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_stop_service}"
@@ -423,18 +428,26 @@ class CougUtilsPlugin(Plugin):
 
     def _arm_thrusters(self):
         """
-        Arm the selected agent.
+        Arm the thrusters on the selected agent.
         """
-        self._set_indicator(
-            self._current_agent, self._widget.armed_indicator, "#00cc00"
+        req = SetBool.Request()
+        req.data = True
+        self._call_service(
+            self._arm_service, req, self._widget.armed_indicator, "#00cc00"
         )
 
     def _disarm_thrusters(self):
         """
-        Disarm the selected agent.
+        Disarm the thrusters on the selected agent.
         """
-        self._set_indicator(
-            self._current_agent, self._widget.armed_indicator, "#cc0000"
+        req = SetBool.Request()
+        req.data = False
+        self._call_service(
+            self._arm_service,
+            req,
+            self._widget.armed_indicator,
+            "#cc0000",
+            on_success=self._print_warn,
         )
 
     def _acoustics_command(self, enabled):
