@@ -50,15 +50,14 @@ def launch_setup(context, *args, **kwargs) -> list:
     with open(template_path, "r") as f:
         template_content = f.read()
 
+    def analyzer(content, key):
+        params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
+        return params[key]
+
     merged_params = {"analyzers": agent_namespaces + ["base_station"]}
     for ns in agent_namespaces:
-        agent_yaml = yaml.safe_load(template_content.replace("AUV_NS", ns))
-        merged_params[ns] = agent_yaml["diagnostic_aggregator"]["ros__parameters"][ns]
-
-    template_yaml = yaml.safe_load(template_content)
-    merged_params["base_station"] = template_yaml["diagnostic_aggregator"][
-        "ros__parameters"
-    ]["base_station"]
+        merged_params[ns] = analyzer(template_content.replace("AUV_NS", ns), ns)
+    merged_params["base_station"] = analyzer(template_content, "base_station")
 
     merged_config = {"diagnostic_aggregator": {"ros__parameters": merged_params}}
 
