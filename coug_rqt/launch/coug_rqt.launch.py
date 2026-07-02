@@ -33,7 +33,6 @@ def launch_setup(context, *args, **kwargs) -> list:
     agent_namespaces = yaml.safe_load(agent_list_str)
 
     pkg_share = get_package_share_directory("coug_rqt")
-
     fleet_params = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
@@ -41,12 +40,11 @@ def launch_setup(context, *args, **kwargs) -> list:
             "coug_rqt_params.yaml",
         ]
     )
-
     rqt_perspective_file = os.path.join(pkg_share, "config", "rqt_config.perspective")
-
     template_path = os.path.join(
         pkg_share, "config", "diagnostic_aggregator_params.yaml.template"
     )
+
     with open(template_path, "r") as f:
         template_content = f.read()
 
