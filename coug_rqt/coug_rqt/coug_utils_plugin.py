@@ -447,6 +447,7 @@ class CougUtilsPlugin(Plugin):
         Build a DVL set_config command for acoustics.
 
         :param enabled: True to enable acoustics, False to disable.
+        :return: A DVL set_config command for the acoustic_enabled parameter.
         """
         msg = ConfigCommand()
         msg.command = "set_config"
