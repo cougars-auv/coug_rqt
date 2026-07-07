@@ -9,14 +9,9 @@ diagnostic_aggregator:
         [
           "factor_graph_node",
           "bt_helm_node",
-          "dvl_a50_twist_node",
-          "dvl_a50_odom_node",
-          "fluid_pressure_odom_node",
           "navsat_odom_node",
-          "seatrac_x150_imu_node",
           "bag_recorder_node",
           "auv_receiver_node",
-          "auv_status_stager_node",
         ]
 
       factor_graph_node:
@@ -37,34 +32,10 @@ diagnostic_aggregator:
         find_and_remove_prefix: ["bt_helm_node: [/AUV_NS] "]
         timeout: 5.0
 
-      dvl_a50_twist_node:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: "dvl_a50_twist_node"
-        find_and_remove_prefix: ["dvl_a50_twist_node: [/AUV_NS] "]
-        timeout: 5.0
-
-      dvl_a50_odom_node:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: "dvl_a50_odom_node"
-        find_and_remove_prefix: ["dvl_a50_odom_node: [/AUV_NS] "]
-        timeout: 5.0
-
-      fluid_pressure_odom_node:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: "fluid_pressure_odom_node"
-        find_and_remove_prefix: ["fluid_pressure_odom_node: [/AUV_NS] "]
-        timeout: 5.0
-
       navsat_odom_node:
         type: diagnostic_aggregator/GenericAnalyzer
         path: "navsat_odom_node"
         find_and_remove_prefix: ["navsat_odom_node: [/AUV_NS] "]
-        timeout: 5.0
-
-      seatrac_x150_imu_node:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: "seatrac_x150_imu_node"
-        find_and_remove_prefix: ["seatrac_x150_imu_node: [/AUV_NS] "]
         timeout: 5.0
 
       bag_recorder_node:
@@ -79,11 +50,6 @@ diagnostic_aggregator:
         find_and_remove_prefix: ["auv_receiver_node: [/AUV_NS] "]
         timeout: 5.0
 
-      auv_status_stager_node:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: "auv_status_stager_node"
-        find_and_remove_prefix: ["auv_status_stager_node: [/AUV_NS] "]
-        timeout: 5.0
 
     base_station:
       type: diagnostic_aggregator/AnalyzerGroup
