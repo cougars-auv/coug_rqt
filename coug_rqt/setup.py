@@ -24,7 +24,7 @@ setup(
     zip_safe=True,
     maintainer="snelsondurrant",
     maintainer_email="snelsond@byu.edu",
-    description="RQT GUI for the CougUV",
+    description="CoUGARs RQT dashboards and UI monitoring tools.",
     license="Apache-2.0",
     extras_require={
         "test": [

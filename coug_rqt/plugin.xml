@@ -2,7 +2,7 @@
   <class name="CougUtils"
     type="coug_rqt.coug_utils_plugin.CougUtilsPlugin"
     base_class_type="rqt_gui_py::Plugin">
-    <description>CougUV fleet utils dashboard</description>
+    <description></description>
     <qtgui>
       <label>CoUGARs Utils</label>
       <icon type="theme">preferences-system</icon>

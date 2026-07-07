@@ -401,9 +401,7 @@ class CougUtilsPlugin(Plugin):
             )
 
     def _rosbag_start(self):
-        """
-        Trigger the start of rosbag recording.
-        """
+        """Trigger the start of rosbag recording."""
         req = BagRecord.Request()
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
@@ -412,9 +410,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _rosbag_stop(self):
-        """
-        Trigger the stop of rosbag recording.
-        """
+        """Trigger the stop of rosbag recording."""
         req = BagRecord.Request()
         req.start = False
         req.prefix = ""
@@ -427,9 +423,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _arm_thrusters(self):
-        """
-        Arm the thrusters on the selected agent.
-        """
+        """Arm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = True
         self._call_service(
@@ -437,9 +431,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _disarm_thrusters(self):
-        """
-        Disarm the thrusters on the selected agent.
-        """
+        """Disarm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = False
         self._call_service(
@@ -463,9 +455,7 @@ class CougUtilsPlugin(Plugin):
         return msg
 
     def _enable_dvl_acoustics(self):
-        """
-        Enable DVL acoustics on the selected agent.
-        """
+        """Enable DVL acoustics on the selected agent."""
         self._publish_command(
             self._acoustics_command(True),
             self._widget.acoustics_indicator,
@@ -473,9 +463,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _disable_dvl_acoustics(self):
-        """
-        Disable DVL acoustics on the selected agent.
-        """
+        """Disable DVL acoustics on the selected agent."""
         self._publish_command(
             self._acoustics_command(False),
             self._widget.acoustics_indicator,
@@ -484,9 +472,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _emergency_stop(self):
-        """
-        Trigger emergency stop.
-        """
+        """Trigger emergency stop."""
         self._call_service(
             self._emergency_stop_service,
             Trigger.Request(),
@@ -496,9 +482,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _emergency_surface(self):
-        """
-        Trigger emergency surface.
-        """
+        """Trigger emergency surface."""
         self._call_service(
             self._emergency_surface_service,
             Trigger.Request(),
@@ -508,9 +492,7 @@ class CougUtilsPlugin(Plugin):
         )
 
     def shutdown_plugin(self):
-        """
-        Clean up clients, executor, thread, and node when the plugin shuts down.
-        """
+        """Clean up clients, executor, thread, and node when the plugin shuts down."""
         for ns_clients in self._clients.values():
             for client in ns_clients.values():
                 self._srv_node.destroy_client(client)
