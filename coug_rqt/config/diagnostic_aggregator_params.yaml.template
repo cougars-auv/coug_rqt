@@ -50,7 +50,6 @@ diagnostic_aggregator:
         find_and_remove_prefix: ["bag_recorder_node: [/AUV_NS] "]
         timeout: 5.0
 
-
     base_station:
       type: diagnostic_aggregator/AnalyzerGroup
       path: base_station
