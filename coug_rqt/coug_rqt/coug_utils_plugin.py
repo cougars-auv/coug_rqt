@@ -33,7 +33,7 @@ from std_srvs.srv import SetBool, Trigger
 
 class CougUtilsPlugin(Plugin):
     """
-    RQT panel for per-agent utility commands.
+    RQT panel for per-agent utility controls.
 
     :author: Nelson Durrant
     :date: June 2026
@@ -276,11 +276,11 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("No agent selected")
 
-    def _publish_command(self, msg, indicator, color, on_success=None):
+    def _publish_topic(self, msg, indicator, color, on_success=None):
         """
-        Publish a command on either the currently selected agent or all agents.
+        Publish a message on either the currently selected agent or all agents.
 
-        :param msg: Command message to publish.
+        :param msg: Message to publish on the agent's topic.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param on_success: Optional callback function upon successful publish.
@@ -457,7 +457,7 @@ class CougUtilsPlugin(Plugin):
 
     def _enable_dvl_acoustics(self):
         """Enable DVL acoustics on the selected agent."""
-        self._publish_command(
+        self._publish_topic(
             self._acoustics_command(True),
             self._widget.acoustics_indicator,
             "#00cc00",
@@ -465,7 +465,7 @@ class CougUtilsPlugin(Plugin):
 
     def _disable_dvl_acoustics(self):
         """Disable DVL acoustics on the selected agent."""
-        self._publish_command(
+        self._publish_topic(
             self._acoustics_command(False),
             self._widget.acoustics_indicator,
             "#cc0000",
