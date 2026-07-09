@@ -33,7 +33,7 @@ from std_srvs.srv import SetBool, Trigger
 
 class CougUtilsPlugin(Plugin):
     """
-    RQT panel for per-agent utility controls.
+    RQT panel for per-agent status and control utilities.
 
     :author: Nelson Durrant
     :date: June 2026
