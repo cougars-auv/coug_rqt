@@ -250,7 +250,7 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
 
-    def _call_service(self, service_name, request, indicator, color, on_success=None):
+    def _call_service(self, service_name, request, indicator, color):
         """
         Call a service on either the currently selected agent or all agents.
 
@@ -258,10 +258,7 @@ class CougUtilsPlugin(Plugin):
         :param request: Service request message.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
-        :param on_success: Optional callback function upon successful response.
         """
-        if on_success is None:
-            on_success = self._print_info
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
@@ -273,7 +270,6 @@ class CougUtilsPlugin(Plugin):
                 "responded": 0,
                 "succeeded": 0,
                 "failed": [],
-                "on_success": on_success,
             }
             for ns in self._agent_namespaces:
                 self._call_agent_service(
@@ -282,27 +278,19 @@ class CougUtilsPlugin(Plugin):
         elif self._current_agent:
             self._print_info(f"[{service_name}] Calling service...")
             self._call_agent_service(
-                self._current_agent,
-                service_name,
-                request,
-                indicator,
-                color,
-                on_success=on_success,
+                self._current_agent, service_name, request, indicator, color
             )
         else:
             self._print_error("No agent selected.")
 
-    def _publish_topic(self, msg, indicator, color, on_success=None):
+    def _publish_topic(self, msg, indicator, color):
         """
         Publish a message on either the currently selected agent or all agents.
 
         :param msg: Message to publish on the agent's topic.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
-        :param on_success: Optional callback function upon successful publish.
         """
-        if on_success is None:
-            on_success = self._print_info
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
@@ -310,11 +298,11 @@ class CougUtilsPlugin(Plugin):
             for ns in self._agent_namespaces:
                 self._pubs[ns].publish(msg)
                 self._set_indicator(ns, indicator, color)
-            on_success(f"Published {len(self._agent_namespaces)} agent(s).")
+            self._print_info(f"Published {len(self._agent_namespaces)} agent(s).")
         elif self._current_agent:
             self._pubs[self._current_agent].publish(msg)
             self._set_indicator(self._current_agent, indicator, color)
-            on_success("Published 1 agent(s).")
+            self._print_info("Published 1 agent(s).")
         else:
             self._print_error("No agent selected.")
 
@@ -327,7 +315,7 @@ class CougUtilsPlugin(Plugin):
         fn()
 
     def _call_agent_service(
-        self, ns, service_name, request, indicator, color, state=None, on_success=None
+        self, ns, service_name, request, indicator, color, state=None
     ):
         """
         Call a service on a specific agent namespace asynchronously.
@@ -338,7 +326,6 @@ class CougUtilsPlugin(Plugin):
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param state: Call state tracking dict for multi-agent calls.
-        :param on_success: Callback function upon successful response.
         """
         client = self._clients.get(ns, {}).get(service_name)
         if client is None or not client.service_is_ready():
@@ -353,15 +340,11 @@ class CougUtilsPlugin(Plugin):
         future = client.call_async(request)
         future.add_done_callback(
             lambda f: self._deliver.emit(
-                lambda: self._on_response(
-                    f, ns, service_name, indicator, color, state, on_success
-                )
+                lambda: self._on_response(f, ns, service_name, indicator, color, state)
             )
         )
 
-    def _on_response(
-        self, future, ns, service_name, indicator, color, state, on_success
-    ):
+    def _on_response(self, future, ns, service_name, indicator, color, state):
         """
         Callback triggered when a service call future completes.
 
@@ -371,7 +354,6 @@ class CougUtilsPlugin(Plugin):
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param state: Call state tracking dict.
-        :param on_success: Callback function upon successful response.
         """
         result = future.result()
         success = result is not None and result.success
@@ -379,7 +361,7 @@ class CougUtilsPlugin(Plugin):
             self._record_result(state, ns, success, indicator, color)
         elif success:
             self._set_indicator(ns, indicator, color)
-            on_success(f"[{service_name}] {result.message}")
+            self._print_info(f"[{service_name}] {result.message}")
         elif result is not None:
             self._print_warn(f"[{service_name}] {result.message}")
         else:
@@ -404,9 +386,8 @@ class CougUtilsPlugin(Plugin):
         if state["responded"] < state["total"]:
             return
         s, t, cmd = state["succeeded"], state["total"], state["cmd"]
-        on_success = state["on_success"]
         if s == t:
-            on_success(f"[{cmd}] All {t} agent(s) confirmed.")
+            self._print_info(f"[{cmd}] All {t} agent(s) confirmed.")
         elif s > 0:
             self._print_warn(
                 f"[{cmd}] {s}/{t} confirmed; failed: {' '.join(state['failed'])}."
@@ -499,22 +480,12 @@ class CougUtilsPlugin(Plugin):
 
     def _emergency_stop(self):
         """Trigger emergency stop."""
-        self._call_service(
-            self._emergency_stop_service,
-            Trigger.Request(),
-            None,
-            None,
-            on_success=self._print_warn,
-        )
+        self._call_service(self._emergency_stop_service, Trigger.Request(), None, None)
 
     def _emergency_surface(self):
         """Trigger emergency surface."""
         self._call_service(
-            self._emergency_surface_service,
-            Trigger.Request(),
-            None,
-            None,
-            on_success=self._print_warn,
+            self._emergency_surface_service, Trigger.Request(), None, None
         )
 
     def shutdown_plugin(self):
