@@ -264,7 +264,7 @@ class CougUtilsPlugin(Plugin):
             on_success = self._print_info
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
-                self._print_error("No agents configured")
+                self._print_error("No agents configured.")
                 return
             self._print_info(f"[{service_name}] Calling service...")
             state = {
@@ -290,7 +290,7 @@ class CougUtilsPlugin(Plugin):
                 on_success=on_success,
             )
         else:
-            self._print_error("No agent selected")
+            self._print_error("No agent selected.")
 
     def _publish_topic(self, msg, indicator, color, on_success=None):
         """
@@ -305,18 +305,18 @@ class CougUtilsPlugin(Plugin):
             on_success = self._print_info
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
-                self._print_error("No agents configured")
+                self._print_error("No agents configured.")
                 return
             for ns in self._agent_namespaces:
                 self._pubs[ns].publish(msg)
                 self._set_indicator(ns, indicator, color)
-            on_success(f"Published {len(self._agent_namespaces)} agent(s)")
+            on_success(f"Published {len(self._agent_namespaces)} agent(s).")
         elif self._current_agent:
             self._pubs[self._current_agent].publish(msg)
             self._set_indicator(self._current_agent, indicator, color)
-            on_success("Published 1 agent(s)")
+            on_success("Published 1 agent(s).")
         else:
-            self._print_error("No agent selected")
+            self._print_error("No agent selected.")
 
     def _run_on_gui_thread(self, fn):
         """
@@ -383,7 +383,7 @@ class CougUtilsPlugin(Plugin):
         elif result is not None:
             self._print_warn(f"[{service_name}] {result.message}")
         else:
-            self._print_error("Service call failed (no response)")
+            self._print_error("Service call failed (no response).")
 
     def _record_result(self, state, ns, success, indicator, color):
         """
@@ -406,14 +406,14 @@ class CougUtilsPlugin(Plugin):
         s, t, cmd = state["succeeded"], state["total"], state["cmd"]
         on_success = state["on_success"]
         if s == t:
-            on_success(f"[{cmd}] All {t} agent(s) confirmed")
+            on_success(f"[{cmd}] All {t} agent(s) confirmed.")
         elif s > 0:
             self._print_warn(
-                f"[{cmd}] {s}/{t} confirmed; failed: {' '.join(state['failed'])}"
+                f"[{cmd}] {s}/{t} confirmed; failed: {' '.join(state['failed'])}."
             )
         else:
             self._print_error(
-                f"[{cmd}] 0/{t} confirmed; failed: {' '.join(state['failed'])}"
+                f"[{cmd}] 0/{t} confirmed; failed: {' '.join(state['failed'])}."
             )
 
     def _rosbag_start(self):
