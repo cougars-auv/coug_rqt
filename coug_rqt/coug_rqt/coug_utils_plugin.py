@@ -250,7 +250,9 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
 
-    def _call_service(self, service_name, request, indicator, color, on_success=None):
+    def _call_service(
+        self, service_name, request, indicator, color, on_success=None, label=None
+    ):
         """
         Call a service on either the currently selected agent or all agents.
 
@@ -259,16 +261,19 @@ class CougUtilsPlugin(Plugin):
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param on_success: Optional callback function upon successful response.
+        :param label: Human-readable action name for status messages.
         """
         if on_success is None:
             on_success = self._print_info
+        if label is None:
+            label = service_name
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
                 return
-            self._print_info(f"[{service_name}] Calling service...")
+            self._print_info(f"[{label}] Calling service...")
             state = {
-                "cmd": service_name,
+                "cmd": label,
                 "total": len(self._agent_namespaces),
                 "responded": 0,
                 "succeeded": 0,
@@ -277,10 +282,10 @@ class CougUtilsPlugin(Plugin):
             }
             for ns in self._agent_namespaces:
                 self._call_agent_service(
-                    ns, service_name, request, indicator, color, state
+                    ns, service_name, request, indicator, color, state, label=label
                 )
         elif self._current_agent:
-            self._print_info(f"[{service_name}] Calling service...")
+            self._print_info(f"[{label}] Calling service...")
             self._call_agent_service(
                 self._current_agent,
                 service_name,
@@ -288,11 +293,12 @@ class CougUtilsPlugin(Plugin):
                 indicator,
                 color,
                 on_success=on_success,
+                label=label,
             )
         else:
             self._print_error("No agent selected.")
 
-    def _publish_topic(self, msg, indicator, color, on_success=None):
+    def _publish_topic(self, msg, indicator, color, on_success=None, label=None):
         """
         Publish a message on either the currently selected agent or all agents.
 
@@ -300,9 +306,11 @@ class CougUtilsPlugin(Plugin):
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param on_success: Optional callback function upon successful publish.
+        :param label: Human-readable action name for status messages.
         """
         if on_success is None:
             on_success = self._print_info
+        prefix = f"[{label}] " if label else ""
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
@@ -310,11 +318,11 @@ class CougUtilsPlugin(Plugin):
             for ns in self._agent_namespaces:
                 self._pubs[ns].publish(msg)
                 self._set_indicator(ns, indicator, color)
-            on_success(f"Published {len(self._agent_namespaces)} agent(s).")
+            on_success(f"{prefix}Published {len(self._agent_namespaces)} agent(s).")
         elif self._current_agent:
             self._pubs[self._current_agent].publish(msg)
             self._set_indicator(self._current_agent, indicator, color)
-            on_success("Published 1 agent(s).")
+            on_success(f"{prefix}Published 1 agent(s).")
         else:
             self._print_error("No agent selected.")
 
@@ -327,7 +335,15 @@ class CougUtilsPlugin(Plugin):
         fn()
 
     def _call_agent_service(
-        self, ns, service_name, request, indicator, color, state=None, on_success=None
+        self,
+        ns,
+        service_name,
+        request,
+        indicator,
+        color,
+        state=None,
+        on_success=None,
+        label=None,
     ):
         """
         Call a service on a specific agent namespace asynchronously.
@@ -339,7 +355,10 @@ class CougUtilsPlugin(Plugin):
         :param color: Visual indicator target success color.
         :param state: Call state tracking dict for multi-agent calls.
         :param on_success: Callback function upon successful response.
+        :param label: Human-readable action name for status messages.
         """
+        if label is None:
+            label = service_name
         client = self._clients.get(ns, {}).get(service_name)
         if client is None or not client.service_is_ready():
             if state is not None:
@@ -354,24 +373,22 @@ class CougUtilsPlugin(Plugin):
         future.add_done_callback(
             lambda f: self._deliver.emit(
                 lambda: self._on_response(
-                    f, ns, service_name, indicator, color, state, on_success
+                    f, ns, indicator, color, state, on_success, label
                 )
             )
         )
 
-    def _on_response(
-        self, future, ns, service_name, indicator, color, state, on_success
-    ):
+    def _on_response(self, future, ns, indicator, color, state, on_success, label):
         """
         Callback triggered when a service call future completes.
 
         :param future: The completed future object.
         :param ns: Agent namespace.
-        :param service_name: Name of the service.
         :param indicator: Visual indicator widget.
         :param color: Visual indicator target success color.
         :param state: Call state tracking dict.
         :param on_success: Callback function upon successful response.
+        :param label: Human-readable action name for status messages.
         """
         result = future.result()
         success = result is not None and result.success
@@ -379,9 +396,9 @@ class CougUtilsPlugin(Plugin):
             self._record_result(state, ns, success, indicator, color)
         elif success:
             self._set_indicator(ns, indicator, color)
-            on_success(f"[{service_name}] {result.message}")
+            on_success(f"[{label}] {result.message}")
         elif result is not None:
-            self._print_warn(f"[{service_name}] {result.message}")
+            self._print_warn(f"[{label}] {result.message}")
         else:
             self._print_error("Service call failed (no response).")
 
@@ -422,7 +439,11 @@ class CougUtilsPlugin(Plugin):
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
         self._call_service(
-            self._bag_record_service, req, self._widget.rosbag_indicator, "#00cc00"
+            self._bag_record_service,
+            req,
+            self._widget.rosbag_indicator,
+            "#00cc00",
+            label="Recording started",
         )
 
     def _rosbag_stop(self):
@@ -435,7 +456,7 @@ class CougUtilsPlugin(Plugin):
             req,
             self._widget.rosbag_indicator,
             "#cc0000",
-            on_success=self._print_warn,
+            label="Recording stopped",
         )
 
     def _arm_thrusters(self):
@@ -443,7 +464,11 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = True
         self._call_service(
-            self._arm_thruster_srv, req, self._widget.armed_indicator, "#00cc00"
+            self._arm_thruster_srv,
+            req,
+            self._widget.armed_indicator,
+            "#00cc00",
+            label="Thrusters armed",
         )
 
     def _disarm_thrusters(self):
@@ -455,7 +480,7 @@ class CougUtilsPlugin(Plugin):
             req,
             self._widget.armed_indicator,
             "#cc0000",
-            on_success=self._print_warn,
+            label="Thrusters disarmed",
         )
 
     def _acoustics_command(self, enabled):
@@ -477,6 +502,7 @@ class CougUtilsPlugin(Plugin):
             self._acoustics_command(True),
             self._widget.acoustics_indicator,
             "#00cc00",
+            label="DVL acoustics enabled",
         )
 
     def _disable_dvl_acoustics(self):
@@ -485,7 +511,7 @@ class CougUtilsPlugin(Plugin):
             self._acoustics_command(False),
             self._widget.acoustics_indicator,
             "#cc0000",
-            on_success=self._print_warn,
+            label="DVL acoustics disabled",
         )
 
     def _calibrate_depth(self):
