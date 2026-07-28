@@ -1,4 +1,4 @@
-# 🌊 CoUGARs RQt
+# 🌊 CoUGARs RQt Plugins
 
 [![ROS 2 Build & Test](https://github.com/cougars-auv/coug_rqt/actions/workflows/ros2_build_and_test.yml/badge.svg)](https://github.com/cougars-auv/coug_rqt/actions/workflows/ros2_build_and_test.yml)
 [![Docker Build](https://github.com/cougars-auv/coug_rqt/actions/workflows/docker_build.yml/badge.svg)](https://github.com/cougars-auv/coug_rqt/actions/workflows/docker_build.yml)

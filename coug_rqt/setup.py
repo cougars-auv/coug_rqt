@@ -24,7 +24,7 @@ setup(
     zip_safe=True,
     maintainer="snelsondurrant",
     maintainer_email="snelsond@byu.edu",
-    description="CoUGARs RQT dashboards and UI monitoring tools.",
+    description="RQt dashboards and UI monitoring tools.",
     license="Apache-2.0",
     url="https://github.com/cougars-auv/coug_rqt",
     extras_require={
