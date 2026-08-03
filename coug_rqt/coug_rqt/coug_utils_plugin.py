@@ -514,7 +514,6 @@ class CougUtilsPlugin(Plugin):
         :param _plugin_settings: Plugin settings profile.
         :param _instance_settings: Instance settings profile.
         """
-        pass
 
     def restore_settings(self, _plugin_settings, _instance_settings):
         """
@@ -523,4 +522,3 @@ class CougUtilsPlugin(Plugin):
         :param _plugin_settings: Plugin settings profile.
         :param _instance_settings: Instance settings profile.
         """
-        pass
