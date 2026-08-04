@@ -60,11 +60,11 @@ def launch_setup(context, *args, **kwargs) -> list:
 
     merged_config = {"diagnostic_aggregator": {"ros__parameters": merged_params}}
 
-    temp_config = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml")
-    yaml.safe_dump(merged_config, temp_config)
-    temp_config.close()
-
-    diagnostics_params_file = temp_config.name
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".yaml"
+    ) as temp_config:
+        yaml.safe_dump(merged_config, temp_config)
+        diagnostics_params_file = temp_config.name
 
     return [
         Node(
