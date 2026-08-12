@@ -30,6 +30,9 @@ from rqt_gui_py.plugin import Plugin
 from sensor_msgs.msg import BatteryState
 from std_srvs.srv import SetBool, Trigger
 
+COLOR_GREEN = "#00cc00"
+COLOR_RED = "#cc0000"
+
 
 class CougUtilsPlugin(Plugin):
     """
@@ -124,7 +127,7 @@ class CougUtilsPlugin(Plugin):
 
         # In sim, thrusters and acoustics start enabled (green); otherwise off (red).
         sim_color = (
-            "#00cc00" if self._node.get_parameter("use_sim_time").value else "#cc0000"
+            COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
         )
 
         self._widget.agent_selector.currentTextChanged.connect(self._on_agent_changed)
@@ -187,7 +190,7 @@ class CougUtilsPlugin(Plugin):
         self._current_agent = text
         state = self._agent_state.get(text, {})
         for indicator in self._indicators:
-            color = state.get(indicator, "#cc0000")
+            color = state.get(indicator, COLOR_RED)
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
         voltage = self._battery_voltages.get(text, "Unknown")
@@ -403,7 +406,7 @@ class CougUtilsPlugin(Plugin):
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
         self._call_service(
-            self._bag_record_service, req, self._widget.rosbag_indicator, "#00cc00"
+            self._bag_record_service, req, self._widget.rosbag_indicator, COLOR_GREEN
         )
 
     def _rosbag_stop(self):
@@ -412,7 +415,7 @@ class CougUtilsPlugin(Plugin):
         req.start = False
         req.prefix = ""
         self._call_service(
-            self._bag_record_service, req, self._widget.rosbag_indicator, "#cc0000"
+            self._bag_record_service, req, self._widget.rosbag_indicator, COLOR_RED
         )
 
     def _arm_thrusters(self):
@@ -420,7 +423,7 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = True
         self._call_service(
-            self._arm_thruster_srv, req, self._widget.armed_indicator, "#00cc00"
+            self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_GREEN
         )
 
     def _disarm_thrusters(self):
@@ -428,7 +431,7 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = False
         self._call_service(
-            self._arm_thruster_srv, req, self._widget.armed_indicator, "#cc0000"
+            self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_RED
         )
 
     def _acoustics_command(self, enabled):
@@ -449,7 +452,7 @@ class CougUtilsPlugin(Plugin):
         self._publish_topic(
             self._acoustics_command(True),
             self._widget.acoustics_indicator,
-            "#00cc00",
+            COLOR_GREEN,
         )
 
     def _disable_dvl_acoustics(self):
@@ -457,7 +460,7 @@ class CougUtilsPlugin(Plugin):
         self._publish_topic(
             self._acoustics_command(False),
             self._widget.acoustics_indicator,
-            "#cc0000",
+            COLOR_RED,
         )
 
     def _calibrate_depth(self):
