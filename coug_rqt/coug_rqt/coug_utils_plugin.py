@@ -15,6 +15,8 @@
 import math
 import os
 import threading
+from collections.abc import Callable
+from typing import Any
 
 import rclpy
 import rclpy.exceptions
@@ -26,6 +28,7 @@ from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtWidgets import QWidget
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
+from rclpy.task import Future
 from rqt_gui_py.plugin import Plugin
 from sensor_msgs.msg import BatteryState
 from std_srvs.srv import SetBool, Trigger
@@ -44,7 +47,7 @@ class CougUtilsPlugin(Plugin):
 
     _deliver = Signal(object)
 
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__(context)
         self.setObjectName("CougUtilsPlugin")
         self._deliver.connect(self._run_on_gui_thread)
@@ -181,7 +184,7 @@ class CougUtilsPlugin(Plugin):
         self._widget.emergency_stop.clicked.connect(self._emergency_stop)
         self._widget.emergency_surface.clicked.connect(self._emergency_surface)
 
-    def _on_agent_changed(self, text):
+    def _on_agent_changed(self, text: str) -> None:
         """
         Handle change in selected agent text.
 
@@ -196,7 +199,7 @@ class CougUtilsPlugin(Plugin):
         voltage = self._battery_voltages.get(text, "Unknown")
         self._widget.battery_status.setText(voltage)
 
-    def _on_battery_status(self, msg, agent_ns):
+    def _on_battery_status(self, msg: BatteryState, agent_ns: str) -> None:
         """
         Handle battery status updates.
 
@@ -209,7 +212,7 @@ class CougUtilsPlugin(Plugin):
         if agent_ns == self._current_agent:
             self._deliver.emit(lambda: self._widget.battery_status.setText(txt))
 
-    def _set_indicator(self, ns, indicator, color):
+    def _set_indicator(self, ns: str, indicator: QWidget | None, color: str) -> None:
         """
         Set the visual indicator color for a specific agent namespace.
 
@@ -223,7 +226,7 @@ class CougUtilsPlugin(Plugin):
         if ns == self._current_agent:
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
-    def _print_info(self, text):
+    def _print_info(self, text: str) -> None:
         """
         Print informational log message and update panel status.
 
@@ -233,7 +236,7 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #008000;")
 
-    def _print_warn(self, text):
+    def _print_warn(self, text: str) -> None:
         """
         Print warning log message and update panel status.
 
@@ -243,7 +246,7 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #808000;")
 
-    def _print_error(self, text):
+    def _print_error(self, text: str) -> None:
         """
         Print error log message and update panel status.
 
@@ -253,7 +256,13 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
 
-    def _call_service(self, service_name, request, indicator, color):
+    def _call_service(
+        self,
+        service_name: str,
+        request: Any,
+        indicator: QWidget | None,
+        color: str | None,
+    ) -> None:
         """
         Call a service on either the currently selected agent or all agents.
 
@@ -286,7 +295,9 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("No agent selected.")
 
-    def _publish_topic(self, msg, indicator, color):
+    def _publish_topic(
+        self, msg: Any, indicator: QWidget | None, color: str | None
+    ) -> None:
         """
         Publish a message on either the currently selected agent or all agents.
 
@@ -309,7 +320,7 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("No agent selected.")
 
-    def _run_on_gui_thread(self, fn):
+    def _run_on_gui_thread(self, fn: Callable[[], None]) -> None:
         """
         Run a callable on the Qt GUI thread.
 
@@ -318,8 +329,14 @@ class CougUtilsPlugin(Plugin):
         fn()
 
     def _call_agent_service(
-        self, ns, service_name, request, indicator, color, state=None
-    ):
+        self,
+        ns: str,
+        service_name: str,
+        request: Any,
+        indicator: QWidget | None,
+        color: str | None,
+        state: dict[str, Any] | None = None,
+    ) -> None:
         """
         Call a service on a specific agent namespace asynchronously.
 
@@ -347,7 +364,15 @@ class CougUtilsPlugin(Plugin):
             )
         )
 
-    def _on_response(self, future, ns, service_name, indicator, color, state):
+    def _on_response(
+        self,
+        future: Future,
+        ns: str,
+        service_name: str,
+        indicator: QWidget | None,
+        color: str | None,
+        state: dict[str, Any] | None,
+    ) -> None:
         """
         Callback triggered when a service call future completes.
 
@@ -370,7 +395,14 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("Service call failed (no response).")
 
-    def _record_result(self, state, ns, success, indicator, color):
+    def _record_result(
+        self,
+        state: dict[str, Any],
+        ns: str,
+        success: bool,
+        indicator: QWidget | None,
+        color: str | None,
+    ) -> None:
         """
         Record the success or failure result of a service call.
 
@@ -400,7 +432,7 @@ class CougUtilsPlugin(Plugin):
                 f"[{cmd}] 0/{t} confirmed; failed: {' '.join(state['failed'])}."
             )
 
-    def _rosbag_start(self):
+    def _rosbag_start(self) -> None:
         """Trigger the start of rosbag recording."""
         req = BagRecord.Request()
         req.start = True
@@ -409,7 +441,7 @@ class CougUtilsPlugin(Plugin):
             self._bag_record_service, req, self._widget.rosbag_indicator, COLOR_GREEN
         )
 
-    def _rosbag_stop(self):
+    def _rosbag_stop(self) -> None:
         """Trigger the stop of rosbag recording."""
         req = BagRecord.Request()
         req.start = False
@@ -418,7 +450,7 @@ class CougUtilsPlugin(Plugin):
             self._bag_record_service, req, self._widget.rosbag_indicator, COLOR_RED
         )
 
-    def _arm_thrusters(self):
+    def _arm_thrusters(self) -> None:
         """Arm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = True
@@ -426,7 +458,7 @@ class CougUtilsPlugin(Plugin):
             self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_GREEN
         )
 
-    def _disarm_thrusters(self):
+    def _disarm_thrusters(self) -> None:
         """Disarm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = False
@@ -434,7 +466,7 @@ class CougUtilsPlugin(Plugin):
             self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_RED
         )
 
-    def _acoustics_command(self, enabled):
+    def _acoustics_command(self, enabled: bool) -> ConfigCommand:
         """
         Build a DVL set_config command for acoustics.
 
@@ -447,7 +479,7 @@ class CougUtilsPlugin(Plugin):
         msg.parameter_value = "true" if enabled else "false"
         return msg
 
-    def _enable_dvl_acoustics(self):
+    def _enable_dvl_acoustics(self) -> None:
         """Enable DVL acoustics on the selected agent."""
         self._publish_topic(
             self._acoustics_command(True),
@@ -455,7 +487,7 @@ class CougUtilsPlugin(Plugin):
             COLOR_GREEN,
         )
 
-    def _disable_dvl_acoustics(self):
+    def _disable_dvl_acoustics(self) -> None:
         """Disable DVL acoustics on the selected agent."""
         self._publish_topic(
             self._acoustics_command(False),
@@ -463,7 +495,7 @@ class CougUtilsPlugin(Plugin):
             COLOR_RED,
         )
 
-    def _calibrate_depth(self):
+    def _calibrate_depth(self) -> None:
         """Trigger a depth (pressure) zero calibration."""
         self._call_service(
             self._depth_calibrate_service,
@@ -472,7 +504,7 @@ class CougUtilsPlugin(Plugin):
             None,
         )
 
-    def _calibrate_fins(self):
+    def _calibrate_fins(self) -> None:
         """Trigger a fin servo calibration."""
         self._call_service(
             self._fins_calibrate_service,
@@ -481,17 +513,17 @@ class CougUtilsPlugin(Plugin):
             None,
         )
 
-    def _emergency_stop(self):
+    def _emergency_stop(self) -> None:
         """Trigger emergency stop."""
         self._call_service(self._emergency_stop_service, Trigger.Request(), None, None)
 
-    def _emergency_surface(self):
+    def _emergency_surface(self) -> None:
         """Trigger emergency surface."""
         self._call_service(
             self._emergency_surface_service, Trigger.Request(), None, None
         )
 
-    def shutdown_plugin(self):
+    def shutdown_plugin(self) -> None:
         """Clean up clients, executor, thread, and node when the plugin shuts down."""
         for ns_clients in self._clients.values():
             for client in ns_clients.values():
@@ -510,7 +542,7 @@ class CougUtilsPlugin(Plugin):
         self._srv_thread.join(timeout=1.0)
         self._srv_node.destroy_node()
 
-    def save_settings(self, _plugin_settings, _instance_settings):
+    def save_settings(self, _plugin_settings: Any, _instance_settings: Any) -> None:
         """
         Save plugin settings.
 
@@ -518,7 +550,7 @@ class CougUtilsPlugin(Plugin):
         :param _instance_settings: Instance settings profile.
         """
 
-    def restore_settings(self, _plugin_settings, _instance_settings):
+    def restore_settings(self, _plugin_settings: Any, _instance_settings: Any) -> None:
         """
         Restore plugin settings.
 
