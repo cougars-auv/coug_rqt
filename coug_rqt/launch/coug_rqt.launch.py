@@ -14,10 +14,11 @@
 
 import os
 import tempfile
+from typing import Any
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
+from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import (
     EnvironmentVariable,
@@ -27,7 +28,7 @@ from launch.substitutions import (
 from launch_ros.actions import Node
 
 
-def launch_setup(context, *args, **kwargs) -> list:
+def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
@@ -49,7 +50,7 @@ def launch_setup(context, *args, **kwargs) -> list:
     with open(template_path, "r") as f:
         template_content = f.read()
 
-    def analyzer(content, key):
+    def analyzer(content: str, key: str) -> dict[str, Any]:
         params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
         return params[key]
 
