@@ -80,6 +80,8 @@ class CougUtilsPlugin(Plugin):
 
         try:
             self._node.declare_parameter("agent_namespaces", [""])
+            self._node.declare_parameter("config_command_topic", "dvl/config/command")
+            self._node.declare_parameter("battery_status_topic", "battery/status")
             self._node.declare_parameter("bag_record_service", "bag_record")
             self._node.declare_parameter("arm_thruster_service", "thruster/arm")
             self._node.declare_parameter(
@@ -88,10 +90,9 @@ class CougUtilsPlugin(Plugin):
             self._node.declare_parameter(
                 "emergency_surface_service", "base/emergency_surface"
             )
+            self._node.declare_parameter("fgo_reset_service", "factor_graph_node/reset")
             self._node.declare_parameter("depth_calibrate_service", "depth/calibrate")
             self._node.declare_parameter("fins_calibrate_service", "fins/calibrate")
-            self._node.declare_parameter("config_command_topic", "dvl/config/command")
-            self._node.declare_parameter("battery_status_topic", "battery/status")
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
             pass
 
@@ -107,6 +108,12 @@ class CougUtilsPlugin(Plugin):
             self._widget.armed_indicator,
             self._widget.acoustics_indicator,
         ]
+        self._config_command_topic = self._node.get_parameter(
+            "config_command_topic"
+        ).value
+        self._battery_status_topic = self._node.get_parameter(
+            "battery_status_topic"
+        ).value
         self._bag_record_service = self._node.get_parameter("bag_record_service").value
         self._arm_thruster_srv = self._node.get_parameter("arm_thruster_service").value
         self._emergency_stop_service = self._node.get_parameter(
@@ -115,17 +122,12 @@ class CougUtilsPlugin(Plugin):
         self._emergency_surface_service = self._node.get_parameter(
             "emergency_surface_service"
         ).value
+        self._fgo_reset_service = self._node.get_parameter("fgo_reset_service").value
         self._depth_calibrate_service = self._node.get_parameter(
             "depth_calibrate_service"
         ).value
         self._fins_calibrate_service = self._node.get_parameter(
             "fins_calibrate_service"
-        ).value
-        self._config_command_topic = self._node.get_parameter(
-            "config_command_topic"
-        ).value
-        self._battery_status_topic = self._node.get_parameter(
-            "battery_status_topic"
         ).value
 
         # In sim, thrusters and acoustics start enabled (green); otherwise off (red).
@@ -150,6 +152,9 @@ class CougUtilsPlugin(Plugin):
                     ),
                     self._emergency_surface_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_surface_service}"
+                    ),
+                    self._fgo_reset_service: self._srv_node.create_client(
+                        Trigger, f"{ns}/{self._fgo_reset_service}"
                     ),
                     self._depth_calibrate_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._depth_calibrate_service}"
@@ -179,6 +184,8 @@ class CougUtilsPlugin(Plugin):
         self._widget.disarm_thrusters.clicked.connect(self._disarm_thrusters)
         self._widget.enable_dvl_acoustics.clicked.connect(self._enable_dvl_acoustics)
         self._widget.disable_dvl_acoustics.clicked.connect(self._disable_dvl_acoustics)
+        self._widget.reset_fgo.clicked.connect(self._reset_fgo)
+        self._widget.reset_dvl_dr.clicked.connect(self._reset_dvl_dr)
         self._widget.calibrate_depth.clicked.connect(self._calibrate_depth)
         self._widget.calibrate_fins.clicked.connect(self._calibrate_fins)
         self._widget.emergency_stop.clicked.connect(self._emergency_stop)
@@ -494,6 +501,21 @@ class CougUtilsPlugin(Plugin):
             self._widget.acoustics_indicator,
             COLOR_RED,
         )
+
+    def _reset_fgo(self) -> None:
+        """Reset the factor graph estimator."""
+        self._call_service(
+            self._fgo_reset_service,
+            Trigger.Request(),
+            None,
+            None,
+        )
+
+    def _reset_dvl_dr(self) -> None:
+        """Reset the DVL dead-reckoning position and attitude."""
+        msg = ConfigCommand()
+        msg.command = "reset_dead_reckoning"
+        self._publish_topic(msg, None, None)
 
     def _calibrate_depth(self) -> None:
         """Trigger a depth (pressure) zero calibration."""
