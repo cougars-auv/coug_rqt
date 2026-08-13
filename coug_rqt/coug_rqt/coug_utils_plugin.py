@@ -25,7 +25,7 @@ from coug_interfaces.srv import BagRecord
 from dvl_msgs.msg import ConfigCommand
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
-from python_qt_binding.QtWidgets import QWidget
+from python_qt_binding.QtWidgets import QMessageBox, QWidget
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
 from rclpy.task import Future
@@ -262,6 +262,30 @@ class CougUtilsPlugin(Plugin):
         self._node.get_logger().error(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
+
+    def _confirm(self, action: str) -> bool:
+        """
+        Ask the user to confirm a destructive action on the targeted agent(s).
+
+        :param action: Human-readable action name, e.g. "Reset FGO".
+        :return: True if the action should proceed, False if the user declined.
+        """
+        if self._widget.apply_all.isChecked():
+            count = len(self._agent_namespaces)
+            target = f"all {count} agent(s)" if count else ""
+        else:
+            target = self._current_agent
+        if not target:
+            return True
+
+        reply = QMessageBox.question(
+            self._widget,
+            "CoUGARs Utils",
+            f"{action} on {target}?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        return reply == QMessageBox.Yes
 
     def _call_service(
         self,
@@ -504,6 +528,8 @@ class CougUtilsPlugin(Plugin):
 
     def _reset_fgo(self) -> None:
         """Reset the factor graph estimator."""
+        if not self._confirm("Reset FGO"):
+            return
         self._call_service(
             self._fgo_reset_service,
             Trigger.Request(),
@@ -513,6 +539,8 @@ class CougUtilsPlugin(Plugin):
 
     def _reset_dvl_dr(self) -> None:
         """Reset the DVL dead-reckoning position and attitude."""
+        if not self._confirm("Reset DVL DR"):
+            return
         msg = ConfigCommand()
         msg.command = "reset_dead_reckoning"
         self._publish_topic(msg, None, None)
