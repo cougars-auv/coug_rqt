@@ -38,13 +38,6 @@ COLOR_RED = "#cc0000"
 
 
 class CougUtilsPlugin(Plugin):
-    """
-    RQT panel for per-agent status and control utilities.
-
-    :author: Nelson Durrant
-    :date: June 2026
-    """
-
     _deliver = Signal(object)
 
     def __init__(self, context: Any) -> None:
@@ -192,11 +185,6 @@ class CougUtilsPlugin(Plugin):
         self._widget.emergency_surface.clicked.connect(self._emergency_surface)
 
     def _on_agent_changed(self, text: str) -> None:
-        """
-        Handle change in selected agent text.
-
-        :param text: The selected agent namespace.
-        """
         self._current_agent = text
         state = self._agent_state.get(text, {})
         for indicator in self._indicators:
@@ -207,12 +195,6 @@ class CougUtilsPlugin(Plugin):
         self._widget.battery_status.setText(voltage)
 
     def _on_battery_status(self, msg: BatteryState, agent_ns: str) -> None:
-        """
-        Handle battery status updates.
-
-        :param msg: BatteryState message.
-        :param agent_ns: Namespace of the agent.
-        """
         val = msg.voltage
         txt = "Unknown" if math.isnan(val) or val < 0.0 else f"{val:.2f} V"
         self._battery_voltages[agent_ns] = txt
@@ -220,13 +202,6 @@ class CougUtilsPlugin(Plugin):
             self._deliver.emit(lambda: self._widget.battery_status.setText(txt))
 
     def _set_indicator(self, ns: str, indicator: QWidget | None, color: str) -> None:
-        """
-        Set the visual indicator color for a specific agent namespace.
-
-        :param ns: Agent namespace.
-        :param indicator: Indicator widget reference.
-        :param color: Hex color string.
-        """
         if indicator is None:
             return
         self._agent_state.setdefault(ns, {})[indicator] = color
@@ -234,42 +209,21 @@ class CougUtilsPlugin(Plugin):
             indicator.setStyleSheet(f"background-color: {color}; border-radius: 6px;")
 
     def _print_info(self, text: str) -> None:
-        """
-        Print informational log message and update panel status.
-
-        :param text: Information message string.
-        """
         self._node.get_logger().info(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #008000;")
 
     def _print_warn(self, text: str) -> None:
-        """
-        Print warning log message and update panel status.
-
-        :param text: Warning message string.
-        """
         self._node.get_logger().warning(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: #808000;")
 
     def _print_error(self, text: str) -> None:
-        """
-        Print error log message and update panel status.
-
-        :param text: Error message string.
-        """
         self._node.get_logger().error(text)
         self._widget.status.setText(text)
         self._widget.status.setStyleSheet("color: red;")
 
     def _confirm(self, action: str) -> bool:
-        """
-        Ask the user to confirm a destructive action on the targeted agent(s).
-
-        :param action: Human-readable action name, e.g. "Reset FGO".
-        :return: True if the action should proceed, False if the user declined.
-        """
         if self._widget.apply_all.isChecked():
             count = len(self._agent_namespaces)
             target = f"all {count} agent(s)" if count else ""
@@ -294,14 +248,6 @@ class CougUtilsPlugin(Plugin):
         indicator: QWidget | None,
         color: str | None,
     ) -> None:
-        """
-        Call a service on either the currently selected agent or all agents.
-
-        :param service_name: Name of the service to call.
-        :param request: Service request message.
-        :param indicator: Visual indicator widget.
-        :param color: Visual indicator target success color.
-        """
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
@@ -329,13 +275,6 @@ class CougUtilsPlugin(Plugin):
     def _publish_topic(
         self, msg: Any, indicator: QWidget | None, color: str | None
     ) -> None:
-        """
-        Publish a message on either the currently selected agent or all agents.
-
-        :param msg: Message to publish on the agent's topic.
-        :param indicator: Visual indicator widget.
-        :param color: Visual indicator target success color.
-        """
         if self._widget.apply_all.isChecked():
             if not self._agent_namespaces:
                 self._print_error("No agents configured.")
@@ -352,11 +291,6 @@ class CougUtilsPlugin(Plugin):
             self._print_error("No agent selected.")
 
     def _run_on_gui_thread(self, fn: Callable[[], None]) -> None:
-        """
-        Run a callable on the Qt GUI thread.
-
-        :param fn: Zero-argument callable to run.
-        """
         fn()
 
     def _call_agent_service(
@@ -368,16 +302,6 @@ class CougUtilsPlugin(Plugin):
         color: str | None,
         state: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Call a service on a specific agent namespace asynchronously.
-
-        :param ns: Agent namespace.
-        :param service_name: Name of the service.
-        :param request: Service request message.
-        :param indicator: Visual indicator widget.
-        :param color: Visual indicator target success color.
-        :param state: Call state tracking dict for multi-agent calls.
-        """
         client = self._clients.get(ns, {}).get(service_name)
         if client is None or not client.service_is_ready():
             if state is not None:
@@ -404,16 +328,6 @@ class CougUtilsPlugin(Plugin):
         color: str | None,
         state: dict[str, Any] | None,
     ) -> None:
-        """
-        Callback triggered when a service call future completes.
-
-        :param future: The completed future object.
-        :param ns: Agent namespace.
-        :param service_name: Name of the service.
-        :param indicator: Visual indicator widget.
-        :param color: Visual indicator target success color.
-        :param state: Call state tracking dict.
-        """
         result = future.result()
         success = result is not None and result.success
         if state is not None:
@@ -434,15 +348,6 @@ class CougUtilsPlugin(Plugin):
         indicator: QWidget | None,
         color: str | None,
     ) -> None:
-        """
-        Record the success or failure result of a service call.
-
-        :param state: Call state tracking dict.
-        :param ns: Agent namespace.
-        :param success: Boolean flag indicating success.
-        :param indicator: Visual indicator widget.
-        :param color: Visual indicator target success color.
-        """
         if success:
             state["succeeded"] += 1
             self._set_indicator(ns, indicator, color)
@@ -464,7 +369,6 @@ class CougUtilsPlugin(Plugin):
             )
 
     def _rosbag_start(self) -> None:
-        """Trigger the start of rosbag recording."""
         req = BagRecord.Request()
         req.start = True
         req.prefix = self._widget.bag_prefix.text()
@@ -473,7 +377,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _rosbag_stop(self) -> None:
-        """Trigger the stop of rosbag recording."""
         req = BagRecord.Request()
         req.start = False
         req.prefix = ""
@@ -482,7 +385,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _arm_thrusters(self) -> None:
-        """Arm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = True
         self._call_service(
@@ -490,7 +392,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _disarm_thrusters(self) -> None:
-        """Disarm the thrusters on the selected agent."""
         req = SetBool.Request()
         req.data = False
         self._call_service(
@@ -498,12 +399,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _acoustics_command(self, enabled: bool) -> ConfigCommand:
-        """
-        Build a DVL set_config command for acoustics.
-
-        :param enabled: True to enable acoustics, False to disable.
-        :return: A DVL set_config command for the acoustic_enabled parameter.
-        """
         msg = ConfigCommand()
         msg.command = "set_config"
         msg.parameter_name = "acoustic_enabled"
@@ -511,7 +406,6 @@ class CougUtilsPlugin(Plugin):
         return msg
 
     def _enable_dvl_acoustics(self) -> None:
-        """Enable DVL acoustics on the selected agent."""
         self._publish_topic(
             self._acoustics_command(True),
             self._widget.acoustics_indicator,
@@ -519,7 +413,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _disable_dvl_acoustics(self) -> None:
-        """Disable DVL acoustics on the selected agent."""
         self._publish_topic(
             self._acoustics_command(False),
             self._widget.acoustics_indicator,
@@ -527,7 +420,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _reset_fgo(self) -> None:
-        """Reset the factor graph estimator."""
         if not self._confirm("Reset FGO"):
             return
         self._call_service(
@@ -538,7 +430,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _reset_dvl_dr(self) -> None:
-        """Reset the DVL dead-reckoning position and attitude."""
         if not self._confirm("Reset DVL DR"):
             return
         msg = ConfigCommand()
@@ -546,7 +437,6 @@ class CougUtilsPlugin(Plugin):
         self._publish_topic(msg, None, None)
 
     def _calibrate_depth(self) -> None:
-        """Trigger a depth (pressure) zero calibration."""
         self._call_service(
             self._depth_calibrate_service,
             Trigger.Request(),
@@ -555,7 +445,6 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _calibrate_fins(self) -> None:
-        """Trigger a fin servo calibration."""
         self._call_service(
             self._fins_calibrate_service,
             Trigger.Request(),
@@ -564,17 +453,14 @@ class CougUtilsPlugin(Plugin):
         )
 
     def _emergency_stop(self) -> None:
-        """Trigger emergency stop."""
         self._call_service(self._emergency_stop_service, Trigger.Request(), None, None)
 
     def _emergency_surface(self) -> None:
-        """Trigger emergency surface."""
         self._call_service(
             self._emergency_surface_service, Trigger.Request(), None, None
         )
 
     def shutdown_plugin(self) -> None:
-        """Clean up clients, executor, thread, and node when the plugin shuts down."""
         for ns_clients in self._clients.values():
             for client in ns_clients.values():
                 self._srv_node.destroy_client(client)
@@ -593,17 +479,7 @@ class CougUtilsPlugin(Plugin):
         self._srv_node.destroy_node()
 
     def save_settings(self, _plugin_settings: Any, _instance_settings: Any) -> None:
-        """
-        Save plugin settings.
-
-        :param _plugin_settings: Plugin settings profile.
-        :param _instance_settings: Instance settings profile.
-        """
+        pass
 
     def restore_settings(self, _plugin_settings: Any, _instance_settings: Any) -> None:
-        """
-        Restore plugin settings.
-
-        :param _plugin_settings: Plugin settings profile.
-        :param _instance_settings: Instance settings profile.
-        """
+        pass
