@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-
-  <!--
-  @file coug_utils.ui
-  @brief UI for the CougUtilsPanel.
-  @author Nelson Durrant
-  @date June 2026
-  -->
-
   <class>coug_utils</class>
   <widget class="QWidget" name="coug_utils">
     <property name="minimumSize">
