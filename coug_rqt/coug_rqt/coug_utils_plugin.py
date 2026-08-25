@@ -108,7 +108,9 @@ class CougUtilsPlugin(Plugin):
             "battery_status_topic"
         ).value
         self._bag_record_service = self._node.get_parameter("bag_record_service").value
-        self._arm_thruster_srv = self._node.get_parameter("arm_thruster_service").value
+        self._arm_thruster_service = self._node.get_parameter(
+            "arm_thruster_service"
+        ).value
         self._emergency_stop_service = self._node.get_parameter(
             "emergency_stop_service"
         ).value
@@ -137,8 +139,8 @@ class CougUtilsPlugin(Plugin):
                     self._bag_record_service: self._srv_node.create_client(
                         BagRecord, f"{ns}/{self._bag_record_service}"
                     ),
-                    self._arm_thruster_srv: self._srv_node.create_client(
-                        SetBool, f"{ns}/{self._arm_thruster_srv}"
+                    self._arm_thruster_service: self._srv_node.create_client(
+                        SetBool, f"{ns}/{self._arm_thruster_service}"
                     ),
                     self._emergency_stop_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_stop_service}"
@@ -290,8 +292,8 @@ class CougUtilsPlugin(Plugin):
         else:
             self._print_error("No agent selected.")
 
-    def _run_on_gui_thread(self, fn: Callable[[], None]) -> None:
-        fn()
+    def _run_on_gui_thread(self, func: Callable[[], None]) -> None:
+        func()
 
     def _call_agent_service(
         self,
@@ -388,14 +390,14 @@ class CougUtilsPlugin(Plugin):
         req = SetBool.Request()
         req.data = True
         self._call_service(
-            self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_GREEN
+            self._arm_thruster_service, req, self._widget.armed_indicator, COLOR_GREEN
         )
 
     def _disarm_thrusters(self) -> None:
         req = SetBool.Request()
         req.data = False
         self._call_service(
-            self._arm_thruster_srv, req, self._widget.armed_indicator, COLOR_RED
+            self._arm_thruster_service, req, self._widget.armed_indicator, COLOR_RED
         )
 
     def _acoustics_command(self, enabled: bool) -> ConfigCommand:
