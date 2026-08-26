@@ -238,11 +238,11 @@
         </layout>
       </item>
 
-      <!-- Row 6: Reset FGO / Reset DVL Dead Reckoning -->
+      <!-- Row 6: Reset FG / Reset DVL Dead Reckoning -->
       <item row="6" column="2" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_reset">
           <item>
-            <widget class="QPushButton" name="reset_fgo">
+            <widget class="QPushButton" name="reset_fg">
               <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -250,7 +250,7 @@
                 </sizepolicy>
               </property>
               <property name="text">
-                <string>Reset FGO</string>
+                <string>Reset FG</string>
               </property>
             </widget>
           </item>

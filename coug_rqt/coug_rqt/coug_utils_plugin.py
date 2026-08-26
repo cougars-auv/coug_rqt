@@ -83,7 +83,7 @@ class CougUtilsPlugin(Plugin):
             self._node.declare_parameter(
                 "emergency_surface_service", "base/emergency_surface"
             )
-            self._node.declare_parameter("fgo_reset_service", "factor_graph_node/reset")
+            self._node.declare_parameter("fg_reset_service", "factor_graph_node/reset")
             self._node.declare_parameter("depth_calibrate_service", "depth/calibrate")
             self._node.declare_parameter("fins_calibrate_service", "fins/calibrate")
         except rclpy.exceptions.ParameterAlreadyDeclaredException:
@@ -117,7 +117,7 @@ class CougUtilsPlugin(Plugin):
         self._emergency_surface_service = self._node.get_parameter(
             "emergency_surface_service"
         ).value
-        self._fgo_reset_service = self._node.get_parameter("fgo_reset_service").value
+        self._fg_reset_service = self._node.get_parameter("fg_reset_service").value
         self._depth_calibrate_service = self._node.get_parameter(
             "depth_calibrate_service"
         ).value
@@ -148,8 +148,8 @@ class CougUtilsPlugin(Plugin):
                     self._emergency_surface_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._emergency_surface_service}"
                     ),
-                    self._fgo_reset_service: self._srv_node.create_client(
-                        Trigger, f"{ns}/{self._fgo_reset_service}"
+                    self._fg_reset_service: self._srv_node.create_client(
+                        Trigger, f"{ns}/{self._fg_reset_service}"
                     ),
                     self._depth_calibrate_service: self._srv_node.create_client(
                         Trigger, f"{ns}/{self._depth_calibrate_service}"
@@ -179,7 +179,7 @@ class CougUtilsPlugin(Plugin):
         self._widget.disarm_thrusters.clicked.connect(self._disarm_thrusters)
         self._widget.enable_dvl_acoustics.clicked.connect(self._enable_dvl_acoustics)
         self._widget.disable_dvl_acoustics.clicked.connect(self._disable_dvl_acoustics)
-        self._widget.reset_fgo.clicked.connect(self._reset_fgo)
+        self._widget.reset_fg.clicked.connect(self._reset_fg)
         self._widget.reset_dvl_dr.clicked.connect(self._reset_dvl_dr)
         self._widget.calibrate_depth.clicked.connect(self._calibrate_depth)
         self._widget.calibrate_fins.clicked.connect(self._calibrate_fins)
@@ -421,11 +421,11 @@ class CougUtilsPlugin(Plugin):
             COLOR_RED,
         )
 
-    def _reset_fgo(self) -> None:
-        if not self._confirm("Reset FGO"):
+    def _reset_fg(self) -> None:
+        if not self._confirm("Reset FG"):
             return
         self._call_service(
-            self._fgo_reset_service,
+            self._fg_reset_service,
             Trigger.Request(),
             None,
             None,
