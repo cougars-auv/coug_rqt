@@ -28,7 +28,6 @@
         <number>6</number>
       </property>
 
-      <!-- Row 0: Agent Selection -->
       <item row="0" column="0">
         <widget class="QLabel" name="label_agent">
           <property name="text">
@@ -50,7 +49,6 @@
         </widget>
       </item>
 
-      <!-- Row 1: Battery -->
       <item row="1" column="0">
         <widget class="QLabel" name="label_battery">
           <property name="text">
@@ -72,7 +70,6 @@
         </widget>
       </item>
 
-      <!-- Row 2: Bag Prefix -->
       <item row="2" column="0">
         <widget class="QLabel" name="label_bag_prefix">
           <property name="text">
@@ -94,7 +91,6 @@
         </widget>
       </item>
 
-      <!-- Row 3: Rosbag Record Start / Stop -->
       <item row="3" column="1" alignment="Qt::AlignCenter">
         <widget class="QLabel" name="rosbag_indicator">
           <property name="minimumSize">
@@ -142,7 +138,6 @@
         </layout>
       </item>
 
-      <!-- Row 4: Arm / Disarm -->
       <item row="4" column="1" alignment="Qt::AlignCenter">
         <widget class="QLabel" name="armed_indicator">
           <property name="minimumSize">
@@ -190,7 +185,6 @@
         </layout>
       </item>
 
-      <!-- Row 5: Enable Acoustics / Disable Acoustics -->
       <item row="5" column="1" alignment="Qt::AlignCenter">
         <widget class="QLabel" name="acoustics_indicator">
           <property name="minimumSize">
@@ -238,7 +232,6 @@
         </layout>
       </item>
 
-      <!-- Row 6: Reset FG / Reset DVL Dead Reckoning -->
       <item row="6" column="2" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_reset">
           <item>
@@ -270,7 +263,6 @@
         </layout>
       </item>
 
-      <!-- Row 7: Calibrate Depth / Calibrate Fins -->
       <item row="7" column="2" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_calibrate">
           <item>
@@ -302,7 +294,6 @@
         </layout>
       </item>
 
-      <!-- Row 8: Separator -->
       <item row="8" column="2" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
@@ -314,7 +305,6 @@
         </widget>
       </item>
 
-      <!-- Row 9: Emergency Stop / Emergency Surface -->
       <item row="9" column="2" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_emergency">
           <item>
@@ -346,7 +336,6 @@
         </layout>
       </item>
 
-      <!-- Row 10: Checkbox -->
       <item row="10" column="2" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="text">
@@ -358,7 +347,6 @@
         </widget>
       </item>
 
-      <!-- Row 11: Status -->
       <item row="11" column="0">
         <widget class="QLabel" name="label_status">
           <property name="text">
