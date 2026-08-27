@@ -109,7 +109,7 @@ class CougUtilsPlugin(Plugin):
         self._fins_calibrate_service = self._get_or_declare(
             "fins_calibrate_service", "fins/calibrate"
         )
-        self._agent_namespaces: list[str] = []
+        self._agent_list: list[str] = []
         self._service_clients: dict[str, dict[str, Any]] = {}
         self._config_command_pubs: dict[str, Any] = {}
         self._battery_subs: list[Any] = []
@@ -137,7 +137,7 @@ class CougUtilsPlugin(Plugin):
         return self._node.get_parameter(name).value
 
     def _add_agent(self, agent_ns: str, initial_color: str) -> None:
-        self._agent_namespaces.append(agent_ns)
+        self._agent_list.append(agent_ns)
         self._battery_voltage_texts[agent_ns] = "Unknown"
         self._service_clients[agent_ns] = {
             self._bag_record_service: self._io_node.create_client(
@@ -233,8 +233,8 @@ class CougUtilsPlugin(Plugin):
 
     def _targets(self) -> list[str]:
         if self._widget.apply_all.isChecked():
-            if self._agent_namespaces:
-                return self._agent_namespaces
+            if self._agent_list:
+                return self._agent_list
             self._status("No agents configured.", "error")
         elif self._current_agent_ns:
             return [self._current_agent_ns]
