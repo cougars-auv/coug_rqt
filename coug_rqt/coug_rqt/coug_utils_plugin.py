@@ -72,17 +72,15 @@ class CougUtilsPlugin(Plugin):
         context.add_widget(self._widget)
 
         self._node = context.node
-        self._comms_node = rclpy.create_node(
+        self._io_node = rclpy.create_node(
             "coug_utils_plugin_node",
             context=self._node.context,
             use_global_arguments=False,
         )
-        self._comms_executor = SingleThreadedExecutor(context=self._node.context)
-        self._comms_executor.add_node(self._comms_node)
-        self._comms_thread = threading.Thread(
-            target=self._comms_executor.spin, daemon=True
-        )
-        self._comms_thread.start()
+        self._io_executor = SingleThreadedExecutor(context=self._node.context)
+        self._io_executor.add_node(self._io_node)
+        self._io_thread = threading.Thread(target=self._io_executor.spin, daemon=True)
+        self._io_thread.start()
 
         self._config_command_topic = self._get_or_declare(
             "config_command_topic", "dvl/config/command"
@@ -142,35 +140,35 @@ class CougUtilsPlugin(Plugin):
         self._agent_namespaces.append(agent_ns)
         self._battery_voltage_texts[agent_ns] = "Unknown"
         self._service_clients[agent_ns] = {
-            self._bag_record_service: self._comms_node.create_client(
+            self._bag_record_service: self._io_node.create_client(
                 BagRecord, f"{agent_ns}/{self._bag_record_service}"
             ),
-            self._arm_thruster_service: self._comms_node.create_client(
+            self._arm_thruster_service: self._io_node.create_client(
                 SetBool, f"{agent_ns}/{self._arm_thruster_service}"
             ),
-            self._emergency_stop_service: self._comms_node.create_client(
+            self._emergency_stop_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._emergency_stop_service}"
             ),
-            self._emergency_surface_service: self._comms_node.create_client(
+            self._emergency_surface_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._emergency_surface_service}"
             ),
-            self._fg_reset_service: self._comms_node.create_client(
+            self._fg_reset_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._fg_reset_service}"
             ),
-            self._depth_calibrate_service: self._comms_node.create_client(
+            self._depth_calibrate_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._depth_calibrate_service}"
             ),
-            self._fins_calibrate_service: self._comms_node.create_client(
+            self._fins_calibrate_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._fins_calibrate_service}"
             ),
         }
-        self._config_command_pubs[agent_ns] = self._comms_node.create_publisher(
+        self._config_command_pubs[agent_ns] = self._io_node.create_publisher(
             ConfigCommand,
             f"{agent_ns}/{self._config_command_topic}",
             qos_profile_system_default,
         )
         self._battery_subs.append(
-            self._comms_node.create_subscription(
+            self._io_node.create_subscription(
                 BatteryState,
                 f"{agent_ns}/{self._battery_status_topic}",
                 lambda msg, ns=agent_ns: self._battery_status(ns, msg),
@@ -416,9 +414,9 @@ class CougUtilsPlugin(Plugin):
         self._widget.status.setStyleSheet(f"color: {color};")
 
     def shutdown_plugin(self) -> None:
-        self._comms_executor.shutdown()
-        self._comms_thread.join(timeout=1.0)
-        self._comms_node.destroy_node()
+        self._io_executor.shutdown()
+        self._io_thread.join(timeout=1.0)
+        self._io_node.destroy_node()
 
     def save_settings(self, _plugin_settings: Any, _instance_settings: Any) -> None:
         pass
