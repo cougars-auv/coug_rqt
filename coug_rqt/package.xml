@@ -6,7 +6,6 @@
   <description>RQt dashboards and UI monitoring tools.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
-  <url type="repository">https://github.com/cougars-auv/coug_rqt</url>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>coug_interfaces</exec_depend>
