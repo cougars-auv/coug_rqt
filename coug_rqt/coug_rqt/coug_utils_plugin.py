@@ -24,7 +24,7 @@ from coug_interfaces.srv import BagRecord
 from dvl_msgs.msg import ConfigCommand
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
-from python_qt_binding.QtWidgets import QMessageBox, QWidget
+from python_qt_binding.QtWidgets import QWidget
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
 from rqt_gui_py.plugin import Plugin
@@ -128,7 +128,7 @@ class CougUtilsPlugin(Plugin):
         initial_color = (
             COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
         )
-        for agent_ns in self._get_or_declare("agent_namespaces", []):
+        for agent_ns in self._get_or_declare("agent_namespaces", [""]):
             if agent_ns:
                 self._add_agent(agent_ns, initial_color)
         self._connect_buttons()
@@ -193,10 +193,10 @@ class CougUtilsPlugin(Plugin):
             lambda: self._set_acoustics(False)
         )
         self._widget.reset_fg.clicked.connect(
-            lambda: self._confirm_then("Reset FG", self._reset_fg)
+            lambda: self._call_service(self._fg_reset_service, Trigger.Request())
         )
         self._widget.reset_dvl_dr.clicked.connect(
-            lambda: self._confirm_then("Reset DVL DR", self._reset_dvl_dr)
+            lambda: self._publish(ConfigCommand(command="reset_dead_reckoning"))
         )
         self._widget.calibrate_depth.clicked.connect(
             lambda: self._call_service(self._depth_calibrate_service, Trigger.Request())
@@ -391,35 +391,6 @@ class CougUtilsPlugin(Plugin):
             COLOR_GREEN if enabled else COLOR_RED,
         )
 
-    def _reset_fg(self) -> None:
-        self._call_service(self._fg_reset_service, Trigger.Request())
-
-    def _reset_dvl_dr(self) -> None:
-        msg = ConfigCommand()
-        msg.command = "reset_dead_reckoning"
-        self._publish(msg)
-
-    def _confirm_then(self, action: str, callback: Any) -> None:
-        targets = self._targets()
-        if not targets:
-            return
-        target = (
-            f"all {len(targets)} agent(s)"
-            if self._widget.apply_all.isChecked()
-            else self._current_agent_ns
-        )
-        if (
-            not target
-            or QMessageBox.question(
-                self._widget,
-                "CoUGARs Utils",
-                f"{action} on {target}?",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            == QMessageBox.Yes
-        ):
-            callback()
-
     def _set_indicator(self, agent_ns: str, indicator: QWidget, color: str) -> None:
         self._indicator_colors.setdefault(agent_ns, {})[indicator] = color
         if agent_ns == self._current_agent_ns:
@@ -430,7 +401,12 @@ class CougUtilsPlugin(Plugin):
 
     def _status(self, text: str, level: str) -> None:
         logger = self._node.get_logger()
-        getattr(logger, "warning" if level == "warning" else level)(text)
+        if level == "info":
+            logger.info(text)
+        elif level == "warning":
+            logger.warning(text)
+        else:
+            logger.error(text)
         self._widget.status.setText(text)
         color = {
             "info": COLOR_INFO_TEXT,
