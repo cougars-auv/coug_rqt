@@ -32,7 +32,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
-    agent_namespaces = yaml.safe_load(agent_list_str)
+    agent_list = yaml.safe_load(agent_list_str)
 
     pkg_share = get_package_share_directory("coug_rqt")
     fleet_params = PathJoinSubstitution(
@@ -54,9 +54,9 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
         params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
         return params[key]
 
-    merged_params = {"analyzers": agent_namespaces + ["base_station"]}
-    for ns in agent_namespaces:
-        merged_params[ns] = analyzer(template_content.replace("AUV_NS", ns), ns)
+    merged_params = {"analyzers": agent_list + ["base_station"]}
+    for ns in agent_list:
+        merged_params[ns] = analyzer(template_content.replace("AGENT_NS", ns), ns)
     merged_params["base_station"] = analyzer(template_content, "base_station")
 
     merged_config = {"diagnostic_aggregator": {"ros__parameters": merged_params}}
@@ -86,7 +86,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
                 fleet_params,
                 {
                     "use_sim_time": use_sim_time,
-                    "agent_namespaces": agent_namespaces,
+                    "agent_list": agent_list,
                 },
             ],
         ),

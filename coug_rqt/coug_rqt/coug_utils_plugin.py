@@ -126,7 +126,7 @@ class CougUtilsPlugin(Plugin):
         initial_color = (
             COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
         )
-        for agent_ns in self._get_or_declare("agent_namespaces", [""]):
+        for agent_ns in self._get_or_declare("agent_list", [""]):
             if agent_ns:
                 self._add_agent(agent_ns, initial_color)
         self._connect_buttons()
