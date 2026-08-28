@@ -49,6 +49,8 @@ class _ServiceCallState:
     responded: int = 0
     succeeded: int = 0
     failed: list[str] = field(default_factory=list)
+    response_message: str = ""
+    failure_level: str = "warning"
 
 
 class CougUtilsPlugin(Plugin):
@@ -253,24 +255,20 @@ class CougUtilsPlugin(Plugin):
         if not targets:
             return
         self._status(f"[{service_name}] Calling service...", "info")
-        state = (
-            _ServiceCallState(service_name, len(targets))
-            if self._widget.apply_all.isChecked()
-            else None
-        )
+        state = _ServiceCallState(service_name, len(targets))
         for agent_ns in targets:
             client = self._service_clients[agent_ns][service_name]
             if not client.service_is_ready():
-                if state is not None:
-                    self._record_service_result(
-                        state, agent_ns, False, indicator, color
-                    )
-                else:
-                    self._status(
-                        "Service not available: "
-                        f"{self._service_name(agent_ns, service_name)}",
-                        "error",
-                    )
+                self._record_service_result(
+                    state,
+                    agent_ns,
+                    False,
+                    indicator,
+                    color,
+                    "Service not available: "
+                    f"{self._service_name(agent_ns, service_name)}",
+                    "error",
+                )
                 continue
             future = client.call_async(request)
             future.add_done_callback(
@@ -288,29 +286,28 @@ class CougUtilsPlugin(Plugin):
         service_name: str,
         indicator: QWidget | None,
         color: str | None,
-        state: _ServiceCallState | None,
+        state: _ServiceCallState,
     ) -> None:
         result = None if future.exception() is not None else future.result()
-        if state is not None:
+        if result is None:
             self._record_service_result(
                 state,
                 agent_ns,
-                result is not None and result.success,
+                False,
                 indicator,
                 color,
-            )
-            return
-        if result is None:
-            self._status(
                 f"Service call failed: {self._service_name(agent_ns, service_name)}",
                 "error",
             )
-        elif result.success:
-            if indicator is not None and color is not None:
-                self._set_indicator(agent_ns, indicator, color)
-            self._status(f"[{service_name}] {result.message}", "info")
-        else:
-            self._status(f"[{service_name}] {result.message}", "warning")
+            return
+        self._record_service_result(
+            state,
+            agent_ns,
+            result.success,
+            indicator,
+            color,
+            result.message,
+        )
 
     def _record_service_result(
         self,
@@ -319,6 +316,8 @@ class CougUtilsPlugin(Plugin):
         success: bool,
         indicator: QWidget | None,
         color: str | None,
+        response_message: str = "",
+        failure_level: str = "warning",
     ) -> None:
         if success:
             state.succeeded += 1
@@ -326,8 +325,18 @@ class CougUtilsPlugin(Plugin):
                 self._set_indicator(agent_ns, indicator, color)
         else:
             state.failed.append(agent_ns)
+            state.failure_level = failure_level
+        state.response_message = response_message
         state.responded += 1
         if state.responded < state.total:
+            return
+        if state.total == 1:
+            level = "info" if success else state.failure_level
+            self._status(
+                f"[{state.service_name}] "
+                f"{state.response_message or 'Service call completed.'}",
+                level,
+            )
             return
         if state.succeeded == state.total:
             self._status(
