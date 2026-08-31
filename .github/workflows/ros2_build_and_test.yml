@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_IMAGE: frostlab/cougars:base-latest
+  DOCKER_IMAGE: frostlab/cougars:dev-latest
   UPSTREAM_REPO: cougars-auv/cougars-dev
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        runner: [ubuntu-24.04]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
