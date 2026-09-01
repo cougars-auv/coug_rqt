@@ -37,8 +37,8 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
         "base_station": params["base_station"],
     }
     for agent_ns in agent_list:
-        agent_params = yaml.safe_load(content.replace("AGENT_NS", agent_ns))
-        merged_params[agent_ns] = agent_params["diagnostic_aggregator"][
+        agent_diagnostics = yaml.safe_load(content.replace("AGENT_NS", agent_ns))
+        merged_params[agent_ns] = agent_diagnostics["diagnostic_aggregator"][
             "ros__parameters"
         ][agent_ns]
 
@@ -59,7 +59,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     agent_list = yaml.safe_load(agent_list_str)
     config_dir = os.environ["CONFIG_DIR"]
 
-    fleet_params = PathJoinSubstitution(
+    fleet_param_file = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
             "fleet",
@@ -88,7 +88,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             name="rqt_gui",
             arguments=["--perspective-file", rqt_perspective_file],
             parameters=[
-                fleet_params,
+                fleet_param_file,
                 {
                     "use_sim_time": use_sim_time,
                     "agent_list": agent_list,
