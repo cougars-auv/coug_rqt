@@ -17,7 +17,6 @@ import tempfile
 from typing import Any
 
 import yaml
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import (
@@ -28,13 +27,38 @@ from launch.substitutions import (
 from launch_ros.actions import Node
 
 
+def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
+    with open(template_path) as template:
+        content = template.read()
+
+    params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
+    merged_params = {
+        "analyzers": [*agent_list, "base_station"],
+        "base_station": params["base_station"],
+    }
+    for agent_ns in agent_list:
+        agent_params = yaml.safe_load(content.replace("AGENT_NS", agent_ns))
+        merged_params[agent_ns] = agent_params["diagnostic_aggregator"][
+            "ros__parameters"
+        ][agent_ns]
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".yaml"
+    ) as rendered_config:
+        yaml.safe_dump(
+            {"diagnostic_aggregator": {"ros__parameters": merged_params}},
+            rendered_config,
+        )
+        return rendered_config.name
+
+
 def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
+    config_dir = os.environ["CONFIG_DIR"]
 
-    pkg_share = get_package_share_directory("coug_rqt")
     fleet_params = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
@@ -42,30 +66,11 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_rqt_params.yaml",
         ]
     )
-    rqt_perspective_file = os.path.join(pkg_share, "config", "rqt_config.perspective")
-    template_path = os.path.join(
-        pkg_share, "config", "diagnostic_aggregator_params.yaml.template"
+    gui_dir = os.path.join(config_dir, "gui")
+    rqt_perspective_file = os.path.join(gui_dir, "rqt.perspective")
+    diagnostics_params_file = create_diagnostics_config(
+        agent_list, os.path.join(gui_dir, "diagnostic_aggregator.yaml.template")
     )
-
-    with open(template_path, "r") as f:
-        template_content = f.read()
-
-    def analyzer(content: str, key: str) -> dict[str, Any]:
-        params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
-        return params[key]
-
-    merged_params = {"analyzers": agent_list + ["base_station"]}
-    for ns in agent_list:
-        merged_params[ns] = analyzer(template_content.replace("AGENT_NS", ns), ns)
-    merged_params["base_station"] = analyzer(template_content, "base_station")
-
-    merged_config = {"diagnostic_aggregator": {"ros__parameters": merged_params}}
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".yaml"
-    ) as temp_config:
-        yaml.safe_dump(merged_config, temp_config)
-        diagnostics_params_file = temp_config.name
 
     return [
         Node(

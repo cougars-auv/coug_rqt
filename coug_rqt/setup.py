@@ -16,9 +16,7 @@ setup(
         (os.path.join("share", package_name, "ui"), glob("ui/*.ui")),
         (
             os.path.join("share", package_name, "config"),
-            glob("config/*.yaml")
-            + glob("config/*.yaml.template")
-            + glob("config/*.perspective"),
+            glob("config/*.yaml"),
         ),
     ],
     install_requires=["setuptools"],
