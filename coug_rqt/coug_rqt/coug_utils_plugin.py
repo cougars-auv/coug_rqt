@@ -16,6 +16,7 @@ import math
 import os
 import threading
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any
 
 import rclpy
@@ -173,7 +174,7 @@ class CougUtilsPlugin(Plugin):
             self._io_node.create_subscription(
                 BatteryState,
                 f"{agent_ns}/{self._battery_status_topic}",
-                lambda msg, ns=agent_ns: self._battery_status(ns, msg),
+                partial(self._battery_status, agent_ns),
                 10,
             )
         )
