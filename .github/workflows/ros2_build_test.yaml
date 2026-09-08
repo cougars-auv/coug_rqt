@@ -25,6 +25,7 @@ permissions:
   contents: read
 
 env:
+  # DOCKER_IMAGE: frostlab/cougars:runtime
   DOCKER_IMAGE: frostlab/cougars:dev
   UPSTREAM_REPO: cougars-auv/cougars-dev
 
@@ -33,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-24.04]
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
