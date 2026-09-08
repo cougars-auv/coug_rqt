@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>coug_rqt</name>
@@ -6,6 +6,8 @@
   <description>RQt dashboards and UI monitoring tools.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>coug_interfaces</exec_depend>
