@@ -63,15 +63,11 @@ class CougUtilsPlugin(Plugin):
         self._gui_call.connect(lambda callback: callback())
 
         self._widget = QWidget()
-        ui_path = os.path.join(
-            get_package_share_directory("coug_rqt"), "ui", "coug_utils.ui"
-        )
+        ui_path = os.path.join(get_package_share_directory("coug_rqt"), "ui", "coug_utils.ui")
         loadUi(ui_path, self._widget)
         self._widget.setObjectName("CougUtilsPanelUi")
         if context.serial_number() > 1:
-            self._widget.setWindowTitle(
-                f"{self._widget.windowTitle()} ({context.serial_number()})"
-            )
+            self._widget.setWindowTitle(f"{self._widget.windowTitle()} ({context.serial_number()})")
         context.add_widget(self._widget)
 
         self._node = context.node
@@ -88,24 +84,16 @@ class CougUtilsPlugin(Plugin):
         self._config_command_topic = self._get_or_declare(
             "config_command_topic", "dvl/config/command"
         )
-        self._battery_status_topic = self._get_or_declare(
-            "battery_status_topic", "battery/status"
-        )
-        self._bag_record_service = self._get_or_declare(
-            "bag_record_service", "bag_record"
-        )
-        self._arm_thruster_service = self._get_or_declare(
-            "arm_thruster_service", "thruster/arm"
-        )
+        self._battery_status_topic = self._get_or_declare("battery_status_topic", "battery/status")
+        self._bag_record_service = self._get_or_declare("bag_record_service", "bag_record")
+        self._arm_thruster_service = self._get_or_declare("arm_thruster_service", "thruster/arm")
         self._emergency_stop_service = self._get_or_declare(
             "emergency_stop_service", "base/emergency_stop"
         )
         self._emergency_surface_service = self._get_or_declare(
             "emergency_surface_service", "base/emergency_surface"
         )
-        self._fg_reset_service = self._get_or_declare(
-            "fg_reset_service", "factor_graph_node/reset"
-        )
+        self._fg_reset_service = self._get_or_declare("fg_reset_service", "factor_graph_node/reset")
         self._depth_calibrate_service = self._get_or_declare(
             "depth_calibrate_service", "depth/calibrate"
         )
@@ -126,9 +114,7 @@ class CougUtilsPlugin(Plugin):
         )
 
         self._widget.agent_selector.currentTextChanged.connect(self._select_agent)
-        initial_color = (
-            COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
-        )
+        initial_color = COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
         for agent_ns in self._get_or_declare("agent_list", [""]):
             if agent_ns:
                 self._add_agent(agent_ns, initial_color)
@@ -187,12 +173,8 @@ class CougUtilsPlugin(Plugin):
         self._widget.rosbag_stop.clicked.connect(lambda: self._record_bag(False))
         self._widget.arm_thrusters.clicked.connect(lambda: self._set_armed(True))
         self._widget.disarm_thrusters.clicked.connect(lambda: self._set_armed(False))
-        self._widget.enable_dvl_acoustics.clicked.connect(
-            lambda: self._set_acoustics(True)
-        )
-        self._widget.disable_dvl_acoustics.clicked.connect(
-            lambda: self._set_acoustics(False)
-        )
+        self._widget.enable_dvl_acoustics.clicked.connect(lambda: self._set_acoustics(True))
+        self._widget.disable_dvl_acoustics.clicked.connect(lambda: self._set_acoustics(False))
         self._widget.reset_fg.clicked.connect(
             lambda: self._call_service(self._fg_reset_service, Trigger.Request())
         )
@@ -209,9 +191,7 @@ class CougUtilsPlugin(Plugin):
             lambda: self._call_service(self._emergency_stop_service, Trigger.Request())
         )
         self._widget.emergency_surface.clicked.connect(
-            lambda: self._call_service(
-                self._emergency_surface_service, Trigger.Request()
-            )
+            lambda: self._call_service(self._emergency_surface_service, Trigger.Request())
         )
 
     def _select_agent(self, agent_ns: str) -> None:
@@ -219,20 +199,14 @@ class CougUtilsPlugin(Plugin):
         colors = self._indicator_colors.get(agent_ns, {})
         for indicator in self._indicators:
             indicator.setStyleSheet(_indicator_style(colors.get(indicator, COLOR_RED)))
-        self._widget.battery_status.setText(
-            self._battery_voltage_texts.get(agent_ns, "Unknown")
-        )
+        self._widget.battery_status.setText(self._battery_voltage_texts.get(agent_ns, "Unknown"))
 
     def _battery_status(self, agent_ns: str, msg: BatteryState) -> None:
         voltage = msg.voltage
-        voltage_text = (
-            "Unknown" if math.isnan(voltage) or voltage < 0 else f"{voltage:.2f} V"
-        )
+        voltage_text = "Unknown" if math.isnan(voltage) or voltage < 0 else f"{voltage:.2f} V"
         self._battery_voltage_texts[agent_ns] = voltage_text
         if agent_ns == self._current_agent_ns:
-            self._gui_call.emit(
-                lambda: self._widget.battery_status.setText(voltage_text)
-            )
+            self._gui_call.emit(lambda: self._widget.battery_status.setText(voltage_text))
 
     def _targets(self) -> list[str]:
         if self._widget.apply_all.isChecked():
@@ -266,17 +240,14 @@ class CougUtilsPlugin(Plugin):
                     False,
                     indicator,
                     color,
-                    "Service not available: "
-                    f"{self._service_name(agent_ns, service_name)}",
+                    f"Service not available: {self._service_name(agent_ns, service_name)}",
                     "error",
                 )
                 continue
             future = client.call_async(request)
             future.add_done_callback(
                 lambda done, ns=agent_ns: self._gui_call.emit(
-                    lambda: self._service_response(
-                        done, ns, service_name, indicator, color, state
-                    )
+                    lambda: self._service_response(done, ns, service_name, indicator, color, state)
                 )
             )
 
@@ -334,8 +305,7 @@ class CougUtilsPlugin(Plugin):
         if state.total == 1:
             level = "info" if success else state.failure_level
             self._status(
-                f"[{state.service_name}] "
-                f"{state.response_message or 'Service call completed.'}",
+                f"[{state.service_name}] {state.response_message or 'Service call completed.'}",
                 level,
             )
             return

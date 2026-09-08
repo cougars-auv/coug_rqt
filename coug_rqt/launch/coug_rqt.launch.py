@@ -38,13 +38,11 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
     }
     for agent_ns in agent_list:
         agent_diagnostics = yaml.safe_load(content.replace("AGENT_NS", agent_ns))
-        merged_params[agent_ns] = agent_diagnostics["diagnostic_aggregator"][
-            "ros__parameters"
-        ][agent_ns]
+        merged_params[agent_ns] = agent_diagnostics["diagnostic_aggregator"]["ros__parameters"][
+            agent_ns
+        ]
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".yaml"
-    ) as rendered_config:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as rendered_config:
         yaml.safe_dump(
             {"diagnostic_aggregator": {"ros__parameters": merged_params}},
             rendered_config,
@@ -110,8 +108,7 @@ def generate_launch_description() -> LaunchDescription:
                 "agent_list",
                 default_value="[auv0]",
                 description=(
-                    "YAML list of agent namespaces "
-                    "(e.g. '[coug1sim]' or '[coug1sim, coug2sim]')"
+                    "YAML list of agent namespaces (e.g. '[coug1sim]' or '[coug1sim, coug2sim]')"
                 ),
             ),
             OpaqueFunction(function=launch_setup),
