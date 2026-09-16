@@ -66,7 +66,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     )
     gui_dir = os.path.join(config_dir, "gui")
     rqt_perspective_file = os.path.join(gui_dir, "rqt.perspective")
-    diagnostics_params_file = create_diagnostics_config(
+    diagnostics_param_file = create_diagnostics_config(
         agent_list, os.path.join(gui_dir, "diagnostic_aggregator.yaml.template")
     )
 
@@ -76,7 +76,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             executable="aggregator_node",
             name="diagnostic_aggregator",
             parameters=[
-                diagnostics_params_file,
+                diagnostics_param_file,
                 {"use_sim_time": use_sim_time},
             ],
         ),
