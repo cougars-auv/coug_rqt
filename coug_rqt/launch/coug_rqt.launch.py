@@ -55,6 +55,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
+
     config_dir = os.environ["CONFIG_DIR"]
 
     fleet_param_file = PathJoinSubstitution(
@@ -64,6 +65,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_rqt_params.yaml",
         ]
     )
+
     gui_dir = os.path.join(config_dir, "gui")
     rqt_perspective_file = os.path.join(gui_dir, "rqt.perspective")
     diagnostics_param_file = create_diagnostics_config(
