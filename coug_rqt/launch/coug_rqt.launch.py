@@ -65,6 +65,9 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_rqt_params.yaml",
         ]
     )
+    scenario_param_file = (
+        LaunchConfiguration("scenario_param_file").perform(context) or fleet_param_file
+    )
 
     gui_dir = os.path.join(config_dir, "gui")
     rqt_perspective_file = os.path.join(gui_dir, "rqt.perspective")
@@ -89,6 +92,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             arguments=["--perspective-file", rqt_perspective_file],
             parameters=[
                 fleet_param_file,
+                scenario_param_file,
                 {
                     "use_sim_time": use_sim_time,
                     "agent_list": agent_list,
@@ -108,6 +112,10 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "agent_list",
                 default_value="[auv0]",
+            ),
+            DeclareLaunchArgument(
+                "scenario_param_file",
+                default_value="",
             ),
             OpaqueFunction(function=launch_setup),
         ]
