@@ -37,7 +37,7 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
         "base_station": params["base_station"],
     }
     for agent_ns in agent_list:
-        agent_diagnostics = yaml.safe_load(content.replace("AGENT_NS", agent_ns))
+        agent_diagnostics = yaml.safe_load(content.replace("<agent_ns>", agent_ns))
         merged_params[agent_ns] = agent_diagnostics["diagnostic_aggregator"]["ros__parameters"][
             agent_ns
         ]
