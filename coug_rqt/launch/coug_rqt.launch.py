@@ -31,7 +31,13 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
     with open(template_path) as template:
         content = template.read()
 
-    params = yaml.safe_load(content)["diagnostic_aggregator"]["ros__parameters"]
+    if len(agent_list) == 1:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as rendered_config:
+            rendered_config.write(content.replace("<agent_ns>", agent_list[0]))
+            return rendered_config.name
+
+    base_diagnostics = yaml.safe_load(content.replace("<agent_ns>", agent_list[0]))
+    params = base_diagnostics["diagnostic_aggregator"]["ros__parameters"]
     merged_params = {
         "analyzers": [*agent_list, "base_station"],
         "base_station": params["base_station"],
@@ -46,6 +52,7 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
         yaml.safe_dump(
             {"diagnostic_aggregator": {"ros__parameters": merged_params}},
             rendered_config,
+            sort_keys=False,
         )
         return rendered_config.name
 
@@ -59,11 +66,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     config_dir = os.environ["CONFIG_DIR"]
 
     fleet_param_file = PathJoinSubstitution(
-        [
-            EnvironmentVariable("CONFIG_DIR"),
-            "fleet",
-            "coug_rqt_params.yaml",
-        ]
+        [EnvironmentVariable("CONFIG_DIR"), "fleet", "coug_rqt_params.yaml"]
     )
     scenario_param_file = (
         LaunchConfiguration("scenario_param_file").perform(context) or fleet_param_file
