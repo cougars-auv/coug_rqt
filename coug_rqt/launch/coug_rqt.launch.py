@@ -18,6 +18,7 @@ from typing import Any
 
 import yaml
 from launch import LaunchContext, LaunchDescription
+from launch.action import Action
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import (
     EnvironmentVariable,
@@ -53,7 +54,7 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
         return rendered_config.name
 
 
-def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
+def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Action]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
