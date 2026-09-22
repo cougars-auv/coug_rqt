@@ -29,31 +29,27 @@ from launch_ros.actions import Node
 
 def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
     with open(template_path) as template:
-        content = template.read()
+        config = yaml.safe_load(template)
 
-    if len(agent_list) == 1:
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as rendered_config:
-            rendered_config.write(content.replace("<agent_ns>", agent_list[0]))
-            return rendered_config.name
-
-    base_diagnostics = yaml.safe_load(content.replace("<agent_ns>", agent_list[0]))
-    params = base_diagnostics["diagnostic_aggregator"]["ros__parameters"]
-    merged_params = {
-        "analyzers": [*agent_list, "base_station"],
-        "base_station": params["base_station"],
+    params = config["diagnostic_aggregator"]["ros__parameters"]
+    templates = {
+        name: yaml.safe_dump(group, sort_keys=False)
+        for name, group in params.items()
+        if name != "analyzers"
     }
-    for agent_ns in agent_list:
-        agent_diagnostics = yaml.safe_load(content.replace("<agent_ns>", agent_ns))
-        merged_params[agent_ns] = agent_diagnostics["diagnostic_aggregator"]["ros__parameters"][
-            agent_ns
-        ]
+    shared = {name: text for name, text in templates.items() if "<agent_ns>" not in name + text}
+    per_agent = {name: text for name, text in templates.items() if "<agent_ns>" in name + text}
+
+    groups = {
+        name.replace("<agent_ns>", agent_ns): yaml.safe_load(text.replace("<agent_ns>", agent_ns))
+        for agent_ns in agent_list
+        for name, text in per_agent.items()
+    }
+    groups.update({name: yaml.safe_load(text) for name, text in shared.items()})
+    config["diagnostic_aggregator"]["ros__parameters"] = {"analyzers": list(groups), **groups}
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as rendered_config:
-        yaml.safe_dump(
-            {"diagnostic_aggregator": {"ros__parameters": merged_params}},
-            rendered_config,
-            sort_keys=False,
-        )
+        yaml.safe_dump(config, rendered_config, sort_keys=False)
         return rendered_config.name
 
 
