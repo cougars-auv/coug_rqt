@@ -48,10 +48,9 @@ def _indicator_style(color: str) -> str:
 @dataclass
 class _ServiceCallState:
     service_name: str
-    total: int
+    agents: list[str]
     responded: int = 0
     succeeded: int = 0
-    agents: list[str] = field(default_factory=list)
     responses: dict[str, str] = field(default_factory=dict)
 
 
@@ -258,7 +257,7 @@ class CougUtilsPlugin(Plugin):
         if not targets:
             return
         self._status(f"[{service_name}] Calling service on {len(targets)} agent(s)...", "info")
-        state = _ServiceCallState(service_name, len(targets), agents=targets)
+        state = _ServiceCallState(service_name, targets)
         for agent_ns in targets:
             client = self._service_clients[agent_ns][service_name]
             if not client.service_is_ready():
@@ -324,9 +323,9 @@ class CougUtilsPlugin(Plugin):
                 self._set_indicator(agent_ns, indicator, color)
         state.responses[agent_ns] = f"[{agent_ns}] {response_message or 'Service call completed.'}"
         state.responded += 1
-        if state.responded < state.total:
+        if state.responded < len(state.agents):
             return
-        if state.succeeded == state.total:
+        if state.succeeded == len(state.agents):
             level = "info"
         else:
             level = "warning" if state.succeeded else "error"
