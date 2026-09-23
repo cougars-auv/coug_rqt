@@ -35,6 +35,22 @@
           </property>
         </widget>
       </item>
+      <item row="0" column="1" alignment="Qt::AlignCenter">
+        <widget class="QLabel" name="status_led_indicator">
+          <property name="minimumSize">
+            <size><width>12</width><height>12</height></size>
+          </property>
+          <property name="maximumSize">
+            <size><width>12</width><height>12</height></size>
+          </property>
+          <property name="styleSheet">
+            <string notr="true">background-color: #a0a0a4; border-radius: 6px;</string>
+          </property>
+          <property name="text">
+            <string/>
+          </property>
+        </widget>
+      </item>
       <item row="0" column="2" colspan="3">
         <widget class="QComboBox" name="agent_selector">
           <property name="sizePolicy">
@@ -100,7 +116,7 @@
             <size><width>12</width><height>12</height></size>
           </property>
           <property name="styleSheet">
-            <string notr="true">background-color: #cc0000; border-radius: 6px;</string>
+            <string notr="true">background-color: #ff0000; border-radius: 6px;</string>
           </property>
           <property name="text">
             <string/>
@@ -147,7 +163,7 @@
             <size><width>12</width><height>12</height></size>
           </property>
           <property name="styleSheet">
-            <string notr="true">background-color: #cc0000; border-radius: 6px;</string>
+            <string notr="true">background-color: #ff0000; border-radius: 6px;</string>
           </property>
           <property name="text">
             <string/>
@@ -194,7 +210,7 @@
             <size><width>12</width><height>12</height></size>
           </property>
           <property name="styleSheet">
-            <string notr="true">background-color: #cc0000; border-radius: 6px;</string>
+            <string notr="true">background-color: #ff0000; border-radius: 6px;</string>
           </property>
           <property name="text">
             <string/>

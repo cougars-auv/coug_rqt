@@ -30,13 +30,15 @@ from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_system_default
 from rqt_gui_py.plugin import Plugin
 from sensor_msgs.msg import BatteryState
+from std_msgs.msg import ColorRGBA
 from std_srvs.srv import SetBool, Trigger
 
-COLOR_GREEN = "#00cc00"
-COLOR_RED = "#cc0000"
+COLOR_GREEN = "#00ff00"
+COLOR_RED = "#ff0000"
+COLOR_OFF = "#a0a0a4"
 COLOR_INFO_TEXT = "#008000"
 COLOR_WARN_TEXT = "#808000"
-COLOR_ERROR_TEXT = "red"
+COLOR_ERROR_TEXT = "#ff0000"
 
 
 def _indicator_style(color: str) -> str:
@@ -85,6 +87,9 @@ class CougUtilsPlugin(Plugin):
             "config_command_topic", "dvl/config/command"
         )
         self._battery_status_topic = self._get_or_declare("battery_status_topic", "battery/status")
+        self._status_led_color_topic = self._get_or_declare(
+            "status_led_color_topic", "status_led/color"
+        )
         self._bag_record_service = self._get_or_declare("bag_record_service", "bag_record")
         self._arm_thruster_service = self._get_or_declare("arm_thruster_service", "thruster/arm")
         self._emergency_stop_service = self._get_or_declare(
@@ -104,6 +109,7 @@ class CougUtilsPlugin(Plugin):
         self._service_clients: dict[str, dict[str, Any]] = {}
         self._config_command_pubs: dict[str, Any] = {}
         self._battery_subs: list[Any] = []
+        self._status_led_subs: list[Any] = []
         self._battery_voltage_texts: dict[str, str] = {}
         self._indicator_colors: dict[str, dict[QWidget, str]] = {}
         self._current_agent_ns = ""
@@ -111,6 +117,7 @@ class CougUtilsPlugin(Plugin):
             self._widget.rosbag_indicator,
             self._widget.armed_indicator,
             self._widget.acoustics_indicator,
+            self._widget.status_led_indicator,
         )
 
         self._widget.agent_selector.currentTextChanged.connect(self._select_agent)
@@ -164,6 +171,15 @@ class CougUtilsPlugin(Plugin):
                 10,
             )
         )
+        self._status_led_subs.append(
+            self._io_node.create_subscription(
+                ColorRGBA,
+                f"{agent_ns}/{self._status_led_color_topic}",
+                partial(self._status_led_color, agent_ns),
+                qos_profile_system_default,
+            )
+        )
+        self._set_indicator(agent_ns, self._widget.status_led_indicator, COLOR_OFF)
         self._set_indicator(agent_ns, self._widget.armed_indicator, initial_color)
         self._set_indicator(agent_ns, self._widget.acoustics_indicator, initial_color)
         self._widget.agent_selector.addItem(agent_ns)
@@ -207,6 +223,14 @@ class CougUtilsPlugin(Plugin):
         self._battery_voltage_texts[agent_ns] = voltage_text
         if agent_ns == self._current_agent_ns:
             self._gui_call.emit(lambda: self._widget.battery_status.setText(voltage_text))
+
+    def _status_led_color(self, agent_ns: str, msg: ColorRGBA) -> None:
+        color = f"#{round(msg.r * 255):02x}{round(msg.g * 255):02x}{round(msg.b * 255):02x}"
+        if self._indicator_colors.get(agent_ns, {}).get(self._widget.status_led_indicator) == color:
+            return
+        self._gui_call.emit(
+            lambda: self._set_indicator(agent_ns, self._widget.status_led_indicator, color)
+        )
 
     def _targets(self) -> list[str]:
         if self._widget.apply_all.isChecked():
