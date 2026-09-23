@@ -229,7 +229,7 @@ class CougUtilsPlugin(Plugin):
         targets = self._targets()
         if not targets:
             return
-        self._status(f"[{service_name}] Calling service...", "info")
+        self._status(f"[{service_name}] Calling service on {len(targets)} agent(s)...", "info")
         state = _ServiceCallState(service_name, len(targets))
         for agent_ns in targets:
             client = self._service_clients[agent_ns][service_name]
@@ -240,7 +240,7 @@ class CougUtilsPlugin(Plugin):
                     False,
                     indicator,
                     color,
-                    f"Service not available: {self._service_name(agent_ns, service_name)}",
+                    f"Service '{self._service_name(agent_ns, service_name)}' not available.",
                     "error",
                 )
                 continue
@@ -268,7 +268,7 @@ class CougUtilsPlugin(Plugin):
                 False,
                 indicator,
                 color,
-                f"Service call failed: {self._service_name(agent_ns, service_name)}",
+                f"Failed to call '{self._service_name(agent_ns, service_name)}'.",
                 "error",
             )
             return
@@ -317,8 +317,8 @@ class CougUtilsPlugin(Plugin):
             return
         level = "warning" if state.succeeded else "error"
         self._status(
-            f"[{state.service_name}] {state.succeeded}/{state.total} confirmed; "
-            f"failed: {' '.join(state.failed)}.",
+            f"[{state.service_name}] {state.succeeded}/{state.total} agent(s) confirmed; "
+            f"failed: {', '.join(state.failed)}.",
             level,
         )
 
