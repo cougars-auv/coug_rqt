@@ -51,7 +51,8 @@ class _ServiceCallState:
     total: int
     responded: int = 0
     succeeded: int = 0
-    responses: list[str] = field(default_factory=list)
+    agents: list[str] = field(default_factory=list)
+    responses: dict[str, str] = field(default_factory=dict)
 
 
 class CougUtilsPlugin(Plugin):
@@ -257,7 +258,7 @@ class CougUtilsPlugin(Plugin):
         if not targets:
             return
         self._status(f"[{service_name}] Calling service on {len(targets)} agent(s)...", "info")
-        state = _ServiceCallState(service_name, len(targets))
+        state = _ServiceCallState(service_name, len(targets), agents=targets)
         for agent_ns in targets:
             client = self._service_clients[agent_ns][service_name]
             if not client.service_is_ready():
@@ -321,7 +322,7 @@ class CougUtilsPlugin(Plugin):
             state.succeeded += 1
             if indicator is not None and color is not None:
                 self._set_indicator(agent_ns, indicator, color)
-        state.responses.append(f"[{agent_ns}] {response_message or 'Service call completed.'}")
+        state.responses[agent_ns] = f"[{agent_ns}] {response_message or 'Service call completed.'}"
         state.responded += 1
         if state.responded < state.total:
             return
@@ -329,7 +330,8 @@ class CougUtilsPlugin(Plugin):
             level = "info"
         else:
             level = "warning" if state.succeeded else "error"
-        self._status(f"[{state.service_name}] {' '.join(state.responses)}", level)
+        responses = " ".join(state.responses[agent_ns] for agent_ns in state.agents)
+        self._status(f"[{state.service_name}] {responses}", level)
 
     def _publish(
         self,
