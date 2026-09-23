@@ -87,9 +87,7 @@ class CougUtilsPlugin(Plugin):
             "config_command_topic", "dvl/config/command"
         )
         self._battery_status_topic = self._get_or_declare("battery_status_topic", "battery/status")
-        self._status_led_color_topic = self._get_or_declare(
-            "status_led_color_topic", "status_led/color"
-        )
+        self._status_led_color_topic = self._get_or_declare("status_led_color_topic", "led/color")
         self._bag_record_service = self._get_or_declare("bag_record_service", "bag_record")
         self._arm_thruster_service = self._get_or_declare("arm_thruster_service", "thruster/arm")
         self._emergency_stop_service = self._get_or_declare(
