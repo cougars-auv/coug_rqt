@@ -311,6 +311,20 @@
       </item>
 
       <item row="8" column="2" colspan="3">
+        <widget class="QPushButton" name="assist_astronaut">
+          <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+            </sizepolicy>
+          </property>
+          <property name="text">
+            <string>Assist Astronaut</string>
+          </property>
+        </widget>
+      </item>
+
+      <item row="9" column="2" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -321,7 +335,7 @@
         </widget>
       </item>
 
-      <item row="9" column="2" colspan="3">
+      <item row="10" column="2" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_emergency">
           <item>
             <widget class="QPushButton" name="emergency_stop">
@@ -352,7 +366,7 @@
         </layout>
       </item>
 
-      <item row="10" column="2" colspan="3">
+      <item row="11" column="2" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="text">
             <string>Apply to all agents</string>
@@ -363,7 +377,7 @@
         </widget>
       </item>
 
-      <item row="11" column="0">
+      <item row="12" column="0">
         <widget class="QLabel" name="label_status">
           <property name="text">
             <string>Status:</string>
@@ -373,7 +387,7 @@
           </property>
         </widget>
       </item>
-      <item row="11" column="2" colspan="3">
+      <item row="12" column="2" colspan="3">
         <widget class="QLabel" name="status">
           <property name="styleSheet">
             <string notr="true">color: darkgreen;</string>

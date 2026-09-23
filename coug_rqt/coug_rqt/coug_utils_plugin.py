@@ -90,18 +90,19 @@ class CougUtilsPlugin(Plugin):
         self._status_led_color_topic = self._get_or_declare("status_led_color_topic", "led/color")
         self._bag_record_service = self._get_or_declare("bag_record_service", "bag_record")
         self._arm_thruster_service = self._get_or_declare("arm_thruster_service", "thruster/arm")
-        self._emergency_stop_service = self._get_or_declare(
-            "emergency_stop_service", "base/emergency_stop"
-        )
-        self._emergency_surface_service = self._get_or_declare(
-            "emergency_surface_service", "base/emergency_surface"
-        )
         self._fg_reset_service = self._get_or_declare("fg_reset_service", "factor_graph_node/reset")
         self._depth_calibrate_service = self._get_or_declare(
             "depth_calibrate_service", "depth/calibrate"
         )
         self._fins_calibrate_service = self._get_or_declare(
             "fins_calibrate_service", "fins/calibrate"
+        )
+        self._assist_service = self._get_or_declare("assist_service", "assist")
+        self._emergency_stop_service = self._get_or_declare(
+            "emergency_stop_service", "base/emergency_stop"
+        )
+        self._emergency_surface_service = self._get_or_declare(
+            "emergency_surface_service", "base/emergency_surface"
         )
         self._agent_list: list[str] = []
         self._service_clients: dict[str, dict[str, Any]] = {}
@@ -140,12 +141,6 @@ class CougUtilsPlugin(Plugin):
             self._arm_thruster_service: self._io_node.create_client(
                 SetBool, f"{agent_ns}/{self._arm_thruster_service}"
             ),
-            self._emergency_stop_service: self._io_node.create_client(
-                Trigger, f"{agent_ns}/{self._emergency_stop_service}"
-            ),
-            self._emergency_surface_service: self._io_node.create_client(
-                Trigger, f"{agent_ns}/{self._emergency_surface_service}"
-            ),
             self._fg_reset_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._fg_reset_service}"
             ),
@@ -154,6 +149,15 @@ class CougUtilsPlugin(Plugin):
             ),
             self._fins_calibrate_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._fins_calibrate_service}"
+            ),
+            self._assist_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._assist_service}"
+            ),
+            self._emergency_stop_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._emergency_stop_service}"
+            ),
+            self._emergency_surface_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._emergency_surface_service}"
             ),
         }
         self._config_command_pubs[agent_ns] = self._io_node.create_publisher(
@@ -200,6 +204,9 @@ class CougUtilsPlugin(Plugin):
         )
         self._widget.calibrate_fins.clicked.connect(
             lambda: self._call_service(self._fins_calibrate_service, Trigger.Request())
+        )
+        self._widget.assist_astronaut.clicked.connect(
+            lambda: self._call_service(self._assist_service, Trigger.Request())
         )
         self._widget.emergency_stop.clicked.connect(
             lambda: self._call_service(self._emergency_stop_service, Trigger.Request())
