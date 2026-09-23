@@ -51,9 +51,7 @@ class _ServiceCallState:
     total: int
     responded: int = 0
     succeeded: int = 0
-    failed: list[str] = field(default_factory=list)
-    response_message: str = ""
-    failure_level: str = "warning"
+    responses: list[str] = field(default_factory=list)
 
 
 class CougUtilsPlugin(Plugin):
@@ -270,7 +268,6 @@ class CougUtilsPlugin(Plugin):
                     indicator,
                     color,
                     f"Service '{self._service_name(agent_ns, service_name)}' not available.",
-                    "error",
                 )
                 continue
             future = client.call_async(request)
@@ -289,16 +286,17 @@ class CougUtilsPlugin(Plugin):
         color: str | None,
         state: _ServiceCallState,
     ) -> None:
-        result = None if future.exception() is not None else future.result()
+        error = future.exception()
+        result = None if error is not None else future.result()
         if result is None:
+            reason = f": {error}" if error is not None else "."
             self._record_service_result(
                 state,
                 agent_ns,
                 False,
                 indicator,
                 color,
-                f"Failed to call '{self._service_name(agent_ns, service_name)}'.",
-                "error",
+                f"Failed to call '{self._service_name(agent_ns, service_name)}'{reason}",
             )
             return
         self._record_service_result(
@@ -318,38 +316,20 @@ class CougUtilsPlugin(Plugin):
         indicator: QWidget | None,
         color: str | None,
         response_message: str = "",
-        failure_level: str = "warning",
     ) -> None:
         if success:
             state.succeeded += 1
             if indicator is not None and color is not None:
                 self._set_indicator(agent_ns, indicator, color)
-        else:
-            state.failed.append(agent_ns)
-            state.failure_level = failure_level
-        state.response_message = response_message
+        state.responses.append(f"[{agent_ns}] {response_message or 'Service call completed.'}")
         state.responded += 1
         if state.responded < state.total:
             return
-        if state.total == 1:
-            level = "info" if success else state.failure_level
-            self._status(
-                f"[{state.service_name}] {state.response_message or 'Service call completed.'}",
-                level,
-            )
-            return
         if state.succeeded == state.total:
-            self._status(
-                f"[{state.service_name}] All {state.total} agent(s) confirmed.",
-                "info",
-            )
-            return
-        level = "warning" if state.succeeded else "error"
-        self._status(
-            f"[{state.service_name}] {state.succeeded}/{state.total} agent(s) confirmed; "
-            f"failed: {', '.join(state.failed)}.",
-            level,
-        )
+            level = "info"
+        else:
+            level = "warning" if state.succeeded else "error"
+        self._status(f"[{state.service_name}] {' '.join(state.responses)}", level)
 
     def _publish(
         self,
@@ -364,7 +344,7 @@ class CougUtilsPlugin(Plugin):
             self._config_command_pubs[agent_ns].publish(msg)
             if indicator is not None and color is not None:
                 self._set_indicator(agent_ns, indicator, color)
-        self._status(f"Published to {len(targets)} agent(s).", "info")
+        self._status(f"Published '{msg.command}' to {len(targets)} agent(s).", "info")
 
     def _record_bag(self, start: bool) -> None:
         request = BagRecord.Request()
