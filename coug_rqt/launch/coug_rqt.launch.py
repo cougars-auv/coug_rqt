@@ -56,7 +56,9 @@ def create_diagnostics_config(agent_list: list[str], template_path: str) -> str:
 
 def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Action]:
     use_sim_time = LaunchConfiguration("use_sim_time")
+
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
+    scenario_param_path = LaunchConfiguration("scenario_param_file").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
 
@@ -65,9 +67,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
     fleet_param_file = PathJoinSubstitution(
         [EnvironmentVariable("CONFIG_DIR"), "fleet", "coug_rqt_params.yaml"]
     )
-    scenario_param_file = (
-        LaunchConfiguration("scenario_param_file").perform(context) or fleet_param_file
-    )
+    scenario_param_file = scenario_param_path or fleet_param_file
 
     gui_dir = os.path.join(config_dir, "gui")
     rqt_perspective_file = os.path.join(gui_dir, "rqt.perspective")
