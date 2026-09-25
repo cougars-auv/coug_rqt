@@ -96,6 +96,11 @@ class CougUtilsPlugin(Plugin):
             "fins_calibrate_service", "fins/calibrate"
         )
         self._assist_service = self._get_or_declare("assist_service", "assist")
+        self._follow_service = self._get_or_declare("follow_service", "assist/follow")
+        self._stay_service = self._get_or_declare("stay_service", "assist/stay")
+        self._fetch_service = self._get_or_declare("fetch_service", "assist/fetch")
+        self._come_service = self._get_or_declare("come_service", "assist/come")
+        self._give_service = self._get_or_declare("give_service", "assist/give")
         self._emergency_stop_service = self._get_or_declare(
             "emergency_stop_service", "base/emergency_stop"
         )
@@ -151,6 +156,21 @@ class CougUtilsPlugin(Plugin):
             self._assist_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._assist_service}"
             ),
+            self._follow_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._follow_service}"
+            ),
+            self._stay_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._stay_service}"
+            ),
+            self._fetch_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._fetch_service}"
+            ),
+            self._come_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._come_service}"
+            ),
+            self._give_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._give_service}"
+            ),
             self._emergency_stop_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._emergency_stop_service}"
             ),
@@ -205,6 +225,21 @@ class CougUtilsPlugin(Plugin):
         )
         self._widget.assist_astronaut.clicked.connect(
             lambda: self._call_service(self._assist_service, Trigger.Request())
+        )
+        self._widget.assist_follow.clicked.connect(
+            lambda: self._call_service(self._follow_service, Trigger.Request())
+        )
+        self._widget.assist_stay.clicked.connect(
+            lambda: self._call_service(self._stay_service, Trigger.Request())
+        )
+        self._widget.assist_fetch.clicked.connect(
+            lambda: self._call_service(self._fetch_service, Trigger.Request())
+        )
+        self._widget.assist_come.clicked.connect(
+            lambda: self._call_service(self._come_service, Trigger.Request())
+        )
+        self._widget.assist_give.clicked.connect(
+            lambda: self._call_service(self._give_service, Trigger.Request())
         )
         self._widget.emergency_stop.clicked.connect(
             lambda: self._call_service(self._emergency_stop_service, Trigger.Request())
