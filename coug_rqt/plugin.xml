@@ -15,9 +15,7 @@
 -->
 
 <library path="src">
-  <class name="CougUtils"
-    type="coug_rqt.coug_utils_plugin.CougUtilsPlugin"
-    base_class_type="rqt_gui_py::Plugin">
+  <class name="CougUtils" type="coug_rqt.coug_utils_plugin.CougUtilsPlugin" base_class_type="rqt_gui_py::Plugin">
     <description></description>
     <qtgui>
       <label>CoUGARs Utils</label>
