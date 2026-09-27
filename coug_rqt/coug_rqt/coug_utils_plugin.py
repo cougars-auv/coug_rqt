@@ -85,15 +85,17 @@ class CougUtilsPlugin(Plugin):
             "config_command_topic", "dvl/config/command"
         )
         self._battery_status_topic = self._get_or_declare("battery_status_topic", "battery/status")
-        self._status_led_color_topic = self._get_or_declare("status_led_color_topic", "led/color")
+        self._led_color_topic = self._get_or_declare("led_color_topic", "led/color")
         self._bag_record_service = self._get_or_declare("bag_record_service", "bag_record")
         self._arm_thruster_service = self._get_or_declare("arm_thruster_service", "thruster/arm")
-        self._fg_reset_service = self._get_or_declare("fg_reset_service", "factor_graph_node/reset")
-        self._depth_calibrate_service = self._get_or_declare(
-            "depth_calibrate_service", "depth/calibrate"
+        self._reset_localization_service = self._get_or_declare(
+            "reset_localization_service", "factor_graph_node/reset"
         )
-        self._fins_calibrate_service = self._get_or_declare(
-            "fins_calibrate_service", "fins/calibrate"
+        self._calibrate_depth_service = self._get_or_declare(
+            "calibrate_depth_service", "depth/calibrate"
+        )
+        self._calibrate_fins_service = self._get_or_declare(
+            "calibrate_fins_service", "fins/calibrate"
         )
         self._assist_service = self._get_or_declare("assist_service", "assist")
         self._follow_service = self._get_or_declare("follow_service", "assist/follow")
@@ -116,7 +118,7 @@ class CougUtilsPlugin(Plugin):
         self._indicator_colors: dict[str, dict[QWidget, str]] = {}
         self._current_agent_ns = ""
         self._indicators = (
-            self._widget.rosbag_indicator,
+            self._widget.recording_indicator,
             self._widget.armed_indicator,
             self._widget.acoustics_indicator,
             self._widget.status_led_indicator,
@@ -144,14 +146,14 @@ class CougUtilsPlugin(Plugin):
             self._arm_thruster_service: self._io_node.create_client(
                 SetBool, f"{agent_ns}/{self._arm_thruster_service}"
             ),
-            self._fg_reset_service: self._io_node.create_client(
-                Trigger, f"{agent_ns}/{self._fg_reset_service}"
+            self._reset_localization_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._reset_localization_service}"
             ),
-            self._depth_calibrate_service: self._io_node.create_client(
-                Trigger, f"{agent_ns}/{self._depth_calibrate_service}"
+            self._calibrate_depth_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._calibrate_depth_service}"
             ),
-            self._fins_calibrate_service: self._io_node.create_client(
-                Trigger, f"{agent_ns}/{self._fins_calibrate_service}"
+            self._calibrate_fins_service: self._io_node.create_client(
+                Trigger, f"{agent_ns}/{self._calibrate_fins_service}"
             ),
             self._assist_service: self._io_node.create_client(
                 Trigger, f"{agent_ns}/{self._assist_service}"
@@ -194,7 +196,7 @@ class CougUtilsPlugin(Plugin):
         self._status_led_subs.append(
             self._io_node.create_subscription(
                 ColorRGBA,
-                f"{agent_ns}/{self._status_led_color_topic}",
+                f"{agent_ns}/{self._led_color_topic}",
                 partial(self._status_led_color, agent_ns),
                 qos_profile_system_default,
             )
@@ -205,23 +207,23 @@ class CougUtilsPlugin(Plugin):
         self._widget.agent_selector.addItem(agent_ns)
 
     def _connect_buttons(self) -> None:
-        self._widget.rosbag_start.clicked.connect(lambda: self._record_bag(True))
-        self._widget.rosbag_stop.clicked.connect(lambda: self._record_bag(False))
+        self._widget.start_recording.clicked.connect(lambda: self._record_bag(True))
+        self._widget.stop_recording.clicked.connect(lambda: self._record_bag(False))
         self._widget.arm_thrusters.clicked.connect(lambda: self._set_armed(True))
         self._widget.disarm_thrusters.clicked.connect(lambda: self._set_armed(False))
         self._widget.enable_dvl_acoustics.clicked.connect(lambda: self._set_acoustics(True))
         self._widget.disable_dvl_acoustics.clicked.connect(lambda: self._set_acoustics(False))
         self._widget.reset_fg.clicked.connect(
-            lambda: self._call_service(self._fg_reset_service, Trigger.Request())
+            lambda: self._call_service(self._reset_localization_service, Trigger.Request())
         )
         self._widget.reset_dvl_dr.clicked.connect(
             lambda: self._publish(ConfigCommand(command="reset_dead_reckoning"))
         )
         self._widget.calibrate_depth.clicked.connect(
-            lambda: self._call_service(self._depth_calibrate_service, Trigger.Request())
+            lambda: self._call_service(self._calibrate_depth_service, Trigger.Request())
         )
         self._widget.calibrate_fins.clicked.connect(
-            lambda: self._call_service(self._fins_calibrate_service, Trigger.Request())
+            lambda: self._call_service(self._calibrate_fins_service, Trigger.Request())
         )
         self._widget.assist_astronaut.clicked.connect(
             lambda: self._call_service(self._assist_service, Trigger.Request())
@@ -389,7 +391,7 @@ class CougUtilsPlugin(Plugin):
         self._call_service(
             self._bag_record_service,
             request,
-            self._widget.rosbag_indicator,
+            self._widget.recording_indicator,
             COLOR_GREEN if start else COLOR_RED,
         )
 
