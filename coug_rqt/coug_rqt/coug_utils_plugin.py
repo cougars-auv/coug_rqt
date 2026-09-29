@@ -33,12 +33,12 @@ from sensor_msgs.msg import BatteryState
 from std_msgs.msg import ColorRGBA
 from std_srvs.srv import SetBool, Trigger
 
-COLOR_GREEN = "#00ff00"
-COLOR_RED = "#ff0000"
-COLOR_OFF = "#a0a0a4"
-COLOR_INFO_TEXT = "#008000"
-COLOR_WARN_TEXT = "#808000"
-COLOR_ERROR_TEXT = "#ff0000"
+_COLOR_GREEN = "#00ff00"
+_COLOR_RED = "#ff0000"
+_COLOR_OFF = "#a0a0a4"
+_COLOR_INFO_TEXT = "#008000"
+_COLOR_WARN_TEXT = "#808000"
+_COLOR_ERROR_TEXT = "#ff0000"
 
 
 def _indicator_style(color: str) -> str:
@@ -125,7 +125,9 @@ class CougUtilsPlugin(Plugin):
         )
 
         self._widget.agent_selector.currentTextChanged.connect(self._select_agent)
-        initial_color = COLOR_GREEN if self._node.get_parameter("use_sim_time").value else COLOR_RED
+        initial_color = (
+            _COLOR_GREEN if self._node.get_parameter("use_sim_time").value else _COLOR_RED
+        )
         for agent_ns in self._get_or_declare("agent_list", [""]):
             if agent_ns:
                 self._add_agent(agent_ns, initial_color)
@@ -201,7 +203,7 @@ class CougUtilsPlugin(Plugin):
                 qos_profile_system_default,
             )
         )
-        self._set_indicator(agent_ns, self._widget.status_led_indicator, COLOR_OFF)
+        self._set_indicator(agent_ns, self._widget.status_led_indicator, _COLOR_OFF)
         self._set_indicator(agent_ns, self._widget.armed_indicator, initial_color)
         self._set_indicator(agent_ns, self._widget.acoustics_indicator, initial_color)
         self._widget.agent_selector.addItem(agent_ns)
@@ -254,7 +256,7 @@ class CougUtilsPlugin(Plugin):
         self._current_agent_ns = agent_ns
         colors = self._indicator_colors.get(agent_ns, {})
         for indicator in self._indicators:
-            indicator.setStyleSheet(_indicator_style(colors.get(indicator, COLOR_RED)))
+            indicator.setStyleSheet(_indicator_style(colors.get(indicator, _COLOR_RED)))
         self._widget.battery_status.setText(self._battery_voltage_texts.get(agent_ns, "Unknown"))
 
     def _battery_status(self, agent_ns: str, msg: BatteryState) -> None:
@@ -392,7 +394,7 @@ class CougUtilsPlugin(Plugin):
             self._bag_record_service,
             request,
             self._widget.recording_indicator,
-            COLOR_GREEN if start else COLOR_RED,
+            _COLOR_GREEN if start else _COLOR_RED,
         )
 
     def _set_armed(self, armed: bool) -> None:
@@ -402,7 +404,7 @@ class CougUtilsPlugin(Plugin):
             self._arm_thruster_service,
             request,
             self._widget.armed_indicator,
-            COLOR_GREEN if armed else COLOR_RED,
+            _COLOR_GREEN if armed else _COLOR_RED,
         )
 
     def _set_acoustics(self, enabled: bool) -> None:
@@ -413,7 +415,7 @@ class CougUtilsPlugin(Plugin):
         self._publish(
             msg,
             self._widget.acoustics_indicator,
-            COLOR_GREEN if enabled else COLOR_RED,
+            _COLOR_GREEN if enabled else _COLOR_RED,
         )
 
     def _set_indicator(self, agent_ns: str, indicator: QWidget, color: str) -> None:
@@ -434,9 +436,9 @@ class CougUtilsPlugin(Plugin):
             logger.error(text)
         self._widget.status.setText(text)
         color = {
-            "info": COLOR_INFO_TEXT,
-            "warning": COLOR_WARN_TEXT,
-            "error": COLOR_ERROR_TEXT,
+            "info": _COLOR_INFO_TEXT,
+            "warning": _COLOR_WARN_TEXT,
+            "error": _COLOR_ERROR_TEXT,
         }[level]
         self._widget.status.setStyleSheet(f"color: {color};")
 
